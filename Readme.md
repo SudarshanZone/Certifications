@@ -217,3 +217,63 @@ Here's a breakdown of the system components with their interactions represented 
 * The Monitoring System tracks system health and triggers alerts for potential issues.
 
 These component diagrams provide a visual representation of how different parts of the backup website interact to enable order square-off functionalities during primary website outages.
+
+
+## Design Diagram for Order Square-Off Backup Website
+
+Here's a consolidated design diagram combining the component interactions and workflow for a clear visual representation:
+
+```
++--------------------+      +-----------------------+      +--------------------+      +--------------------+      +--------------------+
+| User (Primary)     |----->| Load Balancer (NGINX) |----->| Web Server (Primary)|----->| Application Servers |----->| Database (Primary) |
++--------------------+      +-----------------------+      +--------------------+      +--------------------+      +--------------------+
+                             |                          ^ (Real-time data)
+                             |                          |
+                             v                          v
++--------------------+      +-----------------------+      +--------------------+      +--------------------+      +--------------------+
+| User (Backup)      |----->| Load Balancer (NGINX) |----->| Web Server (Backup) |----->| Application Servers |----->| Database (Backup) |
++--------------------+      +-----------------------+      +--------------------+      +--------------------+
+                             |                          | (Synchronized Data)
+                             |                          v
+                             v                          +--------------------+
++--------------------+      +-----------------------+      +--------------------+      +--------------------+
+| Monitoring System   |----->| Alerting System        |      | Messaging Queue     |      | Market Data Service |
++--------------------+      +-----------------------+      +--------------------+      +--------------------+
+                             |                          ^ (Optional)
+                             |                          |
+                             v                          v
++--------------------+      +-----------------------+      +--------------------+
+| Exchange API        |                             |      | Order Management  |
++--------------------+                             |      | Service             |
+                                                     v      +--------------------+
+                                                     +---->  | User Interface     | (Frontend)
+                                                            +--------------------+
+
+**Legenda:**
+
+* Solid lines represent user requests and system responses.
+* Dashed lines represent data flow within the system or synchronization between databases.
+* Rectangles represent system components.
+* Rounded rectangles represent external entities (e.g., user, exchange API).
+
+**Workflow:**
+
+1. User attempts to access the trading platform (Primary or Backup).
+2. Load balancer distributes the request to an available web server.
+3. **Primary Website:**
+    - Web server interacts with primary application servers and database for real-time data and order execution.
+4. **Backup Website:**
+    - Web server interacts with backup application servers and database for order processing.
+5. User Management Service authenticates the user (Backup Website).
+6. User interacts with User Interface to view positions and place square-off orders.
+7. Order Management Service retrieves relevant data and interacts with the messaging queue.
+8. A separate process consumes messages and relays order information to the exchange API.
+9. (Optional) Market Data Service retrieves real-time data from the exchange API (Backup Website).
+10. Exchange API acknowledges order execution.
+11. Order Management Service updates order status in the backup database.
+12. User interface displays confirmation (Backup Website).
+13. Monitoring System tracks system health and sends alerts.
+14. (Optional) Upon primary website recovery, synchronize backup database with the main database.
+```
+
+This design diagram provides a comprehensive overview of the backup website architecture and its interaction with the primary website and exchange API during a failover scenario.
