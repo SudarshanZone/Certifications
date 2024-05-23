@@ -68,3 +68,68 @@ This document outlines the high-level design for a backup website that enables u
 * Conduct disaster recovery drills to ensure team preparedness for switching to the backup website.
 
 **Note:** This HLD provides a high-
+## Database Schema for Order Square-off Backup Website
+
+Here's a sample database schema for your Order Square-off Backup Website:
+
+**Tables:**
+
+1. **Users:**
+    * Columns:
+        * user_id (INT PRIMARY KEY): Unique identifier for each user.
+        * username (VARCHAR(255) UNIQUE): Username for login.
+        * password_hash (VARCHAR(255)): Hashed password for secure storage.
+        * salt (VARCHAR(255)): Salt used for password hashing.
+        * email (VARCHAR(255) UNIQUE): User's email address.
+        * created_at (DATETIME): Timestamp of user creation.
+        * updated_at (DATETIME): Timestamp of user information update.
+
+2. **Positions:**
+    * Columns:
+        * position_id (INT PRIMARY KEY): Unique identifier for each user position.
+        * user_id (INT FOREIGN KEY REFERENCES Users(user_id)): Links position to a specific user.
+        * symbol (VARCHAR(20)): Stock symbol for the position.
+        * quantity (INT): Number of shares held in the position.
+        * average_price (DECIMAL(10,2)): Average purchase price of the position shares.
+        * market_price (DECIMAL(10,2)): Current market price of the stock (optional, can be retrieved from exchange API if not stored).
+        * created_at (DATETIME): Timestamp of position creation.
+        * updated_at (DATETIME): Timestamp of position update (e.g., quantity change).
+
+3. **Orders:**
+    * Columns:
+        * order_id (INT PRIMARY KEY): Unique identifier for each order.
+        * user_id (INT FOREIGN KEY REFERENCES Users(user_id)): Links order to a specific user.
+        * position_id (INT FOREIGN KEY REFERENCES Positions(position_id)): Links order to a specific position.
+        * order_type (ENUM('BUY', 'SELL')): Type of order (buy or sell).
+        * quantity (INT): Number of shares for the order.
+        * price (DECIMAL(10,2)): Order price (optional, can be blank for market orders).
+        * status (ENUM('PENDING', 'FILLED', 'CANCELED')): Current status of the order.
+        * created_at (DATETIME): Timestamp of order creation.
+        * updated_at (DATETIME): Timestamp of order status update.
+
+4. **Audit Logs (Optional):**
+    * Columns:
+        * log_id (INT PRIMARY KEY): Unique identifier for each log entry.
+        * user_id (INT FOREIGN KEY REFERENCES Users(user_id)): Links log entry to a specific user (if applicable).
+        * action (VARCHAR(255)): Description of the action logged (e.g., login attempt, order placement, square-off).
+        * timestamp (DATETIME): Timestamp of the logged action.
+        * details (TEXT): Optional additional details about the logged action.
+
+**Relationships:**
+
+* A User can have many Positions.
+* A User can have many Orders.
+* A Position can have many Orders (related to the same symbol).
+* An Order belongs to a single User and a single Position.
+
+**Data Synchronization:**
+
+Since this is a backup system, the data schema focuses on information crucial for order square-off functionalities. You can implement mechanisms like database mirroring or log shipping to achieve near real-time data synchronization between the primary and backup databases for tables like Users, Positions, and Orders.
+
+**Additional Considerations:**
+
+* You can add indexes to frequently queried columns for improved performance.
+* Implement proper data type selection based on the expected data range and precision requirements.
+* Consider user privacy regulations when storing user information.
+
+**This schema provides a foundation for the backup database. You can further customize it based on your specific requirements and additional functionalities.**
