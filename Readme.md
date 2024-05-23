@@ -133,3 +133,87 @@ Since this is a backup system, the data schema focuses on information crucial fo
 * Consider user privacy regulations when storing user information.
 
 **This schema provides a foundation for the backup database. You can further customize it based on your specific requirements and additional functionalities.**
+
+
+
+
+## Component Diagrams for Order Square-off Backup Website
+
+Here's a breakdown of the system components with their interactions represented in diagrams:
+
+**1. User Interface (Frontend):**
+
+* This component is not represented in a separate diagram as it resides within the web server tier.
+
+**2. Web Servers (Web Server Diagram):**
+
+```
++--------------------+      +-----------------------+
+| User               |----->| Load Balancer (NGINX) |
++--------------------+      +-----------------------+
+                             |
+                             | (Distributes traffic)
+                             |
+                             v
++--------------------+      +-----------------------+
+| Web Server Instance 1 |----->| Application Servers   |
++--------------------+      +-----------------------+
+                             |
+                             v
++--------------------+      +-----------------------+
+| Web Server Instance N |----->| Application Servers   |
++--------------------+      +-----------------------+
+```
+
+* This diagram shows a load balancer (e.g., NGINX) distributing user traffic across multiple web server instances for scalability and redundancy.
+
+**3. Application Servers (Microservices Diagram):**
+
+```
++--------------------+      +-----------------------+      +-----------------------+      +--------------------+
+| User Management     |----->| Messaging Queue        |----->| Order Management      |----->| Database (PostgreSQL)|
+| Service (JWT Auth) |       (Kafka/RabbitMQ)       |      Service (Order Logic)  |       (User Positions)    |
++--------------------+      +-----------------------+      +-----------------------+      +--------------------+
+                             |                          ^ (Optional, Market Data)
+                             |                          |
+                             v                          v
++--------------------+      +-----------------------+      +--------------------+
+| Market Data Service  |----->| Messaging Queue        |----->| User Interface         |       (Real-time data)  |
++--------------------+       (Kafka/RabbitMQ)       |                         (Frontend)  |
+                             |                          +--------------------+
+                             v                          
+
++--------------------+      +--------------------+
+| Monitoring System   |----->| Alerting System    |
++--------------------+      +--------------------+
+
+```
+
+* This diagram depicts a microservices architecture with separate services for User Management, Order Management (optional Market Data Service), and User Interface.
+* Services communicate asynchronously through a messaging queue (e.g., Kafka/RabbitMQ).
+* The Monitoring System tracks application and system health, sending alerts to the Alerting System for potential issues.
+
+**4. Database (Not applicable):**
+
+* The database itself doesn't require a separate component diagram as it interacts with the application servers directly.
+
+**5. Messaging Queue (Not applicable):**
+
+* Similar to the database, the messaging queue operates behind the scenes facilitating communication between services and doesn't require a dedicated diagram.  
+
+**6. Monitoring System (Not applicable):**
+
+* The Monitoring System works in the background and doesn't necessitate a separate component diagram.
+
+**Explanation:**
+
+* The user interacts with the web interface, which resides within the web server tier.
+* The web server forwards requests to the application servers.
+* User Management handles authentication and authorization.
+* Order Management processes order placement requests and interacts with the messaging queue.
+* The Market Data Service (optional) retrieves real-time market data from the exchange API (not shown).
+* The messaging queue facilitates asynchronous communication between services.
+* The database stores user information, positions, and order details.
+* The Monitoring System tracks system health and triggers alerts for potential issues.
+
+These component diagrams provide a visual representation of how different parts of the backup website interact to enable order square-off functionalities during primary website outages.
