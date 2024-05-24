@@ -1,4 +1,5 @@
-https://www.boot.dev/?otp=cgFsS7h1o1HaM7_z&new_user=true
+https://www.hackerearth.com/challenges/test/programming-test-golang-test/?login=7003e561d58ae73906a85ed333f01f16
+
 
 ## High-Level Design (HLD) for Order Square-off Backup Website
 
