@@ -1,3 +1,119 @@
+Certainly! Here is a diagram representing the database schema and interactions between different components of the backup website system.
+
+### Diagram
+
+```mermaid
+erDiagram
+
+    Users {
+        INT user_id PK
+        VARCHAR username
+        VARCHAR password_hash
+        VARCHAR email
+        VARCHAR phone
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+
+    User_Sessions {
+        VARCHAR session_id PK
+        INT user_id FK
+        TIMESTAMP login_time
+        TIMESTAMP last_activity
+    }
+
+    User_Accounts {
+        INT account_id PK
+        INT user_id FK
+        INT main_user_id
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+
+    Orders {
+        INT order_id PK
+        INT user_id FK
+        VARCHAR symbol
+        ENUM order_type
+        INT quantity
+        DECIMAL price
+        ENUM status
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+
+    Trades {
+        INT trade_id PK
+        INT order_id FK
+        INT user_id FK
+        VARCHAR symbol
+        ENUM trade_type
+        INT quantity
+        DECIMAL price
+        TIMESTAMP trade_time
+    }
+
+    Positions {
+        INT position_id PK
+        INT user_id FK
+        VARCHAR symbol
+        INT quantity
+        DECIMAL average_price
+    }
+
+    Sync_Log {
+        INT sync_id PK
+        VARCHAR table_name
+        TIMESTAMP last_sync
+        ENUM status
+        TEXT message
+    }
+
+    Users ||--o{ User_Sessions: has
+    Users ||--o{ User_Accounts: has
+    Users ||--o{ Orders: places
+    Orders ||--o{ Trades: results_in
+    Users ||--o{ Positions: holds
+    User_Accounts }|--|| Users: references
+
+    %% Diagram for the system flow from user to database interaction
+    classDiagram
+        User --> Frontend
+        Frontend --> Load_Balancer
+        Load_Balancer --> Web_Server
+        Web_Server --> Application_Server
+        Application_Server --> Orders
+        Application_Server --> Trades
+        Application_Server --> Positions
+        Application_Server --> Sync_Log
+        Application_Server --> User_Sessions
+        Application_Server --> User_Accounts
+
+```
+
+### Explanation
+
+- **Users** table stores basic user information.
+- **User_Sessions** table tracks user sessions for session continuity.
+- **User_Accounts** table links user accounts between the primary and backup systems.
+- **Orders** table stores order details.
+- **Trades** table keeps track of executed trades.
+- **Positions** table stores user positions.
+- **Sync_Log** table tracks synchronization status between the primary and backup databases.
+
+### System Interaction Flow
+
+1. **User** interacts with the **Frontend**.
+2. The **Frontend** sends requests through the **Load Balancer**.
+3. The **Load Balancer** directs requests to the **Web Server**.
+4. The **Web Server** forwards requests to the **Application Server**.
+5. The **Application Server** interacts with the **Orders**, **Trades**, **Positions**, **User_Sessions**, **User_Accounts**, and **Sync_Log** tables to process user actions and maintain data integrity.
+
+This diagram helps visualize the relationships between different tables and the flow of user interactions within the backup website system.
+
+
+
+
 To handle user validation on the backup website while ensuring continuity and security, the database schema should include tables for users, sessions, and associations that ensure data integrity and relationships. Here’s an updated schema focusing on user validation and seamless switching:
 
 ### Database Schema for Backup Website
