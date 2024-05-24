@@ -1,3 +1,169 @@
+To handle user validation on the backup website while ensuring continuity and security, the database schema should include tables for users, sessions, and associations that ensure data integrity and relationships. Here’s an updated schema focusing on user validation and seamless switching:
+
+### Database Schema for Backup Website
+
+#### 1. Users
+Stores user information, synchronized with the main website.
+
+```sql
+CREATE TABLE Users (
+    user_id INT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    phone VARCHAR(15),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+```
+
+#### 2. User_Sessions
+Tracks user sessions to maintain session continuity.
+
+```sql
+CREATE TABLE User_Sessions (
+    session_id VARCHAR(255) PRIMARY KEY,
+    user_id INT,
+    login_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id)
+);
+```
+
+#### 3. User_Accounts
+Links user accounts between the primary and backup systems.
+
+```sql
+CREATE TABLE User_Accounts (
+    account_id INT PRIMARY KEY,
+    user_id INT,
+    main_user_id INT,  -- Reference to the user ID on the main website
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id)
+);
+```
+
+#### 4. Orders
+Stores order details, synchronized with the main website.
+
+```sql
+CREATE TABLE Orders (
+    order_id INT PRIMARY KEY,
+    user_id INT,
+    symbol VARCHAR(10),
+    order_type ENUM('buy', 'sell'),
+    quantity INT,
+    price DECIMAL(10, 2),
+    status ENUM('pending', 'executed', 'cancelled') DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id)
+);
+```
+
+#### 5. Trades
+Keeps track of executed trades, synchronized with the main website.
+
+```sql
+CREATE TABLE Trades (
+    trade_id INT PRIMARY KEY,
+    order_id INT,
+    user_id INT,
+    symbol VARCHAR(10),
+    trade_type ENUM('buy', 'sell'),
+    quantity INT,
+    price DECIMAL(10, 2),
+    trade_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES Orders(order_id),
+    FOREIGN KEY (user_id) REFERENCES Users(user_id)
+);
+```
+
+#### 6. Positions
+Stores user positions, synchronized with the main website.
+
+```sql
+CREATE TABLE Positions (
+    position_id INT PRIMARY KEY,
+    user_id INT,
+    symbol VARCHAR(10),
+    quantity INT,
+    average_price DECIMAL(10, 2),
+    FOREIGN KEY (user_id) REFERENCES Users(user_id)
+);
+```
+
+#### 7. Sync_Log
+Tracks synchronization status between primary and backup databases.
+
+```sql
+CREATE TABLE Sync_Log (
+    sync_id INT PRIMARY KEY,
+    table_name VARCHAR(50),
+    last_sync TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status ENUM('success', 'failure') DEFAULT 'success',
+    message TEXT
+);
+```
+
+### Relationships and Associations
+
+- **Users to User_Sessions**: One-to-Many
+  - A user can have multiple active sessions.
+  - `Users.user_id` -> `User_Sessions.user_id`
+
+- **Users to User_Accounts**: One-to-One
+  - Each user on the backup website corresponds to a user on the main website.
+  - `Users.user_id` -> `User_Accounts.user_id`
+  - `User_Accounts.main_user_id` -> Main website's user ID
+
+- **Users to Orders**: One-to-Many
+  - A user can place multiple orders.
+  - `Users.user_id` -> `Orders.user_id`
+
+- **Orders to Trades**: One-to-Many
+  - An order can result in multiple trades.
+  - `Orders.order_id` -> `Trades.order_id`
+
+- **Users to Positions**: One-to-Many
+  - A user can have multiple positions.
+  - `Users.user_id` -> `Positions.user_id`
+
+### Step-by-Step Workflow Example for User Validation
+
+#### User Login to Backup Website
+
+1. **User** accesses the backup website and enters credentials.
+2. **Frontend** collects credentials and sends them to the **Load Balancer**.
+3. **Load Balancer** directs the request to a **Web Server**.
+4. **Web Server** forwards the request to the **Application Server**.
+5. **Application Server** validates credentials against the `Users` table.
+6. **Application Server** checks for an active session in the `User_Sessions` table:
+   - If an active session exists, update `last_activity` timestamp.
+   - If no active session, create a new entry in `User_Sessions`.
+7. **Application Server** returns a session token to the **Frontend**.
+
+#### Order Placement and Synchronization
+
+1. **User** places an order via the **Frontend**.
+2. Order details are sent through the **Load Balancer** to the **Web Server**.
+3. **Web Server** forwards the request to the **Application Server**.
+4. **Application Server** saves the order in the `Orders` table.
+5. If the order is executed, entries are created in the `Trades` table.
+6. **Application Server** updates the `Positions` table accordingly.
+7. Changes are queued for synchronization and sent to both the primary and backup databases.
+8. **Sync_Log** table is updated with synchronization status.
+
+This detailed design ensures that users can be validated seamlessly when switching to the backup website, with all necessary data relationships and synchronization mechanisms in place to maintain consistency and integrity.
+
+
+
+
+
+
+
+
 https://www.hackerearth.com/challenges/test/programming-test-golang-test/?login=7003e561d58ae73906a85ed333f01f16
 
 
