@@ -1,3 +1,73 @@
+## Estimating Hardware Requirements (Stock Market Website) - 3 Million Users
+
+**Scaling for 3 Million Users (Back-of-the-Envelope Calculations):**
+
+**Assumptions:**
+
+* 3 million active users
+* 2% user concurrency during peak hours (adjust based on your research)
+* Specific data volumes and transaction frequencies will be replaced with placeholders (X, Y, and Z). You'll need to fill these in with your own research.
+
+**1. User Load and Web Servers:**
+
+* Peak User Concurrency: 3 million users * 2% = 60,000 users (replace with your calculated value)
+* Web Server Specifications: Research resource requirements for your chosen framework (React) to handle 60,000 concurrent users. This will depend on factors like page complexity and user interactions. 
+* Estimated Number of Web Servers: X (replace with your research-based estimate)
+
+**2. Application Servers:**
+
+* Data Volume Estimation:
+    * Historical Data: X GB (replace with your estimated data size)
+    * Real-time Data Updates per Day: Y updates/day (e.g., billions per day) with an average size of W bytes (e.g., 100 bytes)
+    * Total Real-time Data per Day: Y updates/day * W bytes/update = Z bytes/day (e.g., petabytes per day)
+* Transaction Frequency: Z transactions per second (replace with your research on peak order processing)
+
+* Application Server Specifications: Research resource requirements for your Golang framework to handle the estimated data volume and peak transaction frequency (Z transactions/second).
+* Estimated Number of Application Servers: Y (replace with your research-based estimate)
+
+**3. Database Servers:**
+
+* Database Engine: Consider a combination of:
+    * Time-series database (TSDB) like Amazon Timestream or Cloud Spanner for historical data.
+    * RDBMS like MySQL or PostgreSQL on RDS/Cloud SQL for user accounts, order management, etc.
+* Storage:
+    * TSDB storage: Depends on historical data volume (estimated X GB earlier). Account for replication overhead (e.g., 2x).
+    * RDBMS storage: Depends on user data, order data, etc. Estimate size and account for replication.
+
+* Database Server Specifications: Research performance requirements for your expected query complexity (e.g., filtering stocks, real-time price updates). Choose database server specifications (CPU, RAM, storage type - SSD/HDD) based on your query volume and response time requirements.
+* Estimated Number of Database Servers (consider redundancy): W (replace with your research-based estimate)
+
+**4. Messaging Queue Servers:**
+
+* Queue size and performance:
+    * Estimate the number of messages expected in the queue at peak times (e.g., stock price updates per second * message size).
+    * Consider message retention policies.
+
+* Research resource requirements for RabbitMQ based on your estimated message throughput and latency needs.
+* Estimated Number of Messaging Queue Servers (consider redundancy): Z (replace with your research-based estimate)
+
+**Database Size:**
+
+The database size will depend on the combination of:
+
+* Historical data volume (X GB in our example)
+* User data volume (estimate the size of user accounts, preferences, etc.)
+* Order data volume (estimate the size of buy/sell orders and related information)
+
+**Important Note:**
+
+These are estimations to get you started. Conduct thorough performance testing with realistic workloads to refine your hardware and database requirements before deployment. This is an iterative process, so revisit these estimations as you gather more data and refine your website features.
+
+**Additional Considerations:**
+
+* Network bandwidth: Ensure sufficient bandwidth to handle peak traffic loads, especially for real-time data synchronization.
+* Redundancy and failover: Implement redundant network paths and failover mechanisms to ensure high availability.
+* Scalability: Design the system to scale horizontally (adding more servers) as needed.
+
+By performing this back-of-the-envelope calculation and filling in the placeholders with your specific data, you'll have a starting point for planning your hardware infrastructure. Remember, conducting performance testing and refining these estimations are crucial before deployment.
+
+-----------__
+
 ### Estimating Hardware Requirements
 
 To estimate the hardware requirements for the backup website, we will consider the key components and their roles in handling the failover scenario. These estimates will be based on the expected user load, transaction volume, and data handling capabilities.
