@@ -1,3 +1,6 @@
+https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_GettingStarted.CreatingConnecting.MySQL.html
+
+
 ## Estimating Hardware Requirements (Stock Market Website) - 3 Million Users
 
 **Scaling for 3 Million Users (Back-of-the-Envelope Calculations):**
