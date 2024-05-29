@@ -1,280 +1,55 @@
-# Backup Website Hardware Requirements for 1 Million Users on AWS
-
-## Overview
-
-To ensure seamless operation and high availability of our backup website in case of a failure of the main website, we need to estimate the hardware requirements based on 1 million active users. The following document provides a detailed estimation for each critical component, utilizing AWS services such as EC2 instances, RDS for databases, and other relevant AWS offerings.
-
-## AWS Services and Configurations
-
-### 1. Frontend Servers (Web Servers)
-
-**Assumptions**:
-- Peak concurrent users: 5% of total active users (50,000 users)
-- Each web server can handle 2,000 concurrent connections
-
-**Calculation**:
-- Number of web servers needed = Peak concurrent users / Connections per server
-- = 50,000 / 2,000
-- = 25 servers
-
-**Configuration**:
-- **AWS Service**: EC2
-- **Instance Type**: m5.large (2 vCPUs, 8GB RAM)
-- **Quantity**: 25
-
-### 2. Application Servers
-
-**Assumptions**:
-- Each application server can handle 1,000 RPS (requests per second)
-- Average of 5 requests per second per active user during peak hours (50,000 users * 5 RPS = 250,000 RPS)
-
-**Calculation**:
-- Number of application servers needed = Total RPS / RPS per server
-- = 250,000 / 1,000
-- = 250 servers
-
-**Configuration**:
-- **AWS Service**: EC2
-- **Instance Type**: m5.2xlarge (8 vCPUs, 32GB RAM)
-- **Quantity**: 250
-
-### 3. Database Servers
-
-**Assumptions**:
-- High volume of transactions requires robust and scalable database setup
-- Utilize sharding and replication for performance and redundancy
-- Assume 1 primary server for write operations and 2 replicas for read operations
-
-**Calculation**:
-- Number of shards based on user data distribution: Assume 1 shard per 200,000 users
-- Total shards = 1,000,000 / 200,000
-- = 5 shards
-- Each shard has 1 primary and 2 replica servers = 5 * 3
-- = 15 servers
-
-**Configuration**:
-- **AWS Service**: RDS for MySQL/PostgreSQL
-- **Instance Type**: db.m5.4xlarge (16 vCPUs, 64GB RAM, 1TB SSD storage)
-- **Quantity**: 15 (5 primary, 10 replicas)
-
-### 4. Messaging Queue Servers
-
-**Assumptions**:
-- Each server can handle 50,000 messages per second
-- Peak messaging load: 250,000 RPS
-
-**Calculation**:
-- Number of messaging queue servers needed = Peak RPS / Messages per server
-- = 250,000 / 50,000
-- = 5 servers
-
-**Configuration**:
-- **AWS Service**: EC2 with Kafka or Amazon MSK (Managed Streaming for Kafka)
-- **Instance Type**: m5.large (2 vCPUs, 8GB RAM)
-- **Quantity**: 5
-
-### 5. Load Balancers
-
-**Assumptions**:
-- Load balancers should handle twice the peak concurrent connections for redundancy
-
-**Calculation**:
-- Number of load balancers needed = (Peak concurrent users / Connections per load balancer) * 2
-- Assuming each load balancer can handle 50,000 connections
-- = (50,000 / 50,000) * 2
-- = 2 load balancers
-
-**Configuration**:
-- **AWS Service**: Elastic Load Balancing (ELB)
-- **Quantity**: 2
-
-### 6. Monitoring and Alerting System
-
-**Assumptions**:
-- Monitoring infrastructure should be able to collect metrics from all servers and handle alerting
-
-**Calculation**:
-- Based on 250 application servers, 25 web servers, 15 database servers, and 5 messaging queue servers (total 295 servers)
-- Assume 1 monitoring server per 100 monitored servers
-
-**Configuration**:
-- **AWS Service**: CloudWatch
-- **Instance Type**: m5.large (2 vCPUs, 8GB RAM)
-- **Quantity**: 3 (rounding up)
-
-### 7. Backup Infrastructure
-
-**Assumptions**:
-- Ensure data redundancy and backup for databases and critical services
-
-**Calculation**:
-- Based on the number of database servers (15), assume 1 backup server for every 5 database servers
-
-**Configuration**:
-- **AWS Service**: S3 for backups, EC2 for backup servers
-- **Instance Type**: m5.large (2 vCPUs, 8GB RAM)
-- **Quantity**: 3 (rounding up)
-
-## Summary of Hardware Requirements
-
-| Component               | Quantity | AWS Service                     | Instance Type            | Configuration                |
-|-------------------------|----------|---------------------------------|--------------------------|------------------------------|
-| **Web Servers**         | 25       | EC2                             | m5.large                 | 2 vCPUs, 8GB RAM each        |
-| **Application Servers** | 250      | EC2                             | m5.2xlarge               | 8 vCPUs, 32GB RAM each       |
-| **Database Servers**    | 15       | RDS (MySQL/PostgreSQL)          | db.m5.4xlarge            | 16 vCPUs, 64GB RAM, 1TB SSD  |
-| **Messaging Queue**     | 5        | EC2 / Amazon MSK                | m5.large                 | 2 vCPUs, 8GB RAM each        |
-| **Load Balancers**      | 2        | Elastic Load Balancing (ELB)    | N/A                      | N/A                          |
-| **Monitoring Servers**  | 3        | EC2 / CloudWatch                | m5.large                 | 2 vCPUs, 8GB RAM each        |
-| **Backup Servers**      | 3        | EC2 / S3 for storage            | m5.large                 | 2 vCPUs, 8GB RAM each        |
-
-## Additional Considerations
-
-- **Network Bandwidth**: Ensure sufficient bandwidth to handle peak traffic loads, especially for real-time data synchronization.
-- **Redundancy and Failover**: Implement redundant network paths and failover mechanisms to ensure high availability.
-- **Scalability**: Design the system to scale horizontally, allowing the addition of more servers as needed.
-
-These estimates provide a starting point for planning and budgeting the backup website infrastructure to handle 1 million active users using AWS services. Adjustments may be necessary based on detailed performance testing and specific business requirements.
-
-
-
-
-
-
-
-----------------------------------------------------------------------------------------------------End ---------------------------------------------------------
-# Backup Website Hardware Requirements for 1.86 Million Users on AWS
-
-## Overview
-
-To ensure seamless operation and high availability of our backup website in case of a failure of the main website, we need to estimate the hardware requirements based on 1.86 million active users. The following document provides a detailed estimation for each critical component, utilizing AWS services such as EC2 instances, RDS for databases, and other relevant AWS offerings.
-
-## AWS Services and Configurations
-
-### 1. Frontend Servers (Web Servers)
-
-**Assumptions**:
-- Peak concurrent users: 5% of total active users (93,108 users)
-- Each web server can handle 2,000 concurrent connections
-
-**Calculation**:
-- Number of web servers needed = Peak concurrent users / Connections per server
-- = 93,108 / 2,000
-- = 47 servers
-
-**Configuration**:
-- **AWS Service**: EC2
-- **Instance Type**: m5.large (2 vCPUs, 8GB RAM)
-- **Quantity**: 47
-
-### 2. Application Servers
-
-**Assumptions**:
-- Each application server can handle 1,000 RPS (requests per second)
-- Average of 5 requests per second per active user during peak hours (93,108 users * 5 RPS = 465,540 RPS)
-
-**Calculation**:
-- Number of application servers needed = Total RPS / RPS per server
-- = 465,540 / 1,000
-- = 466 servers
-
-**Configuration**:
-- **AWS Service**: EC2
-- **Instance Type**: m5.2xlarge (8 vCPUs, 32GB RAM)
-- **Quantity**: 466
-
-### 3. Database Servers
-
-**Assumptions**:
-- High volume of transactions requires robust and scalable database setup
-- Utilize sharding and replication for performance and redundancy
-- Assume 1 primary server for write operations and 2 replicas for read operations
-
-**Calculation**:
-- Number of shards based on user data distribution: Assume 1 shard per 200,000 users
-- Total shards = 1,862,161 / 200,000
-- = 10 shards
-- Each shard has 1 primary and 2 replica servers = 10 * 3
-- = 30 servers
-
-**Configuration**:
-- **AWS Service**: RDS for MySQL/PostgreSQL
-- **Instance Type**: db.m5.4xlarge (16 vCPUs, 64GB RAM, 1TB SSD storage)
-- **Quantity**: 30 (10 primary, 20 replicas)
-
-### 4. Messaging Queue Servers
-
-**Assumptions**:
-- Each server can handle 50,000 messages per second
-- Peak messaging load: 465,540 RPS
-
-**Calculation**:
-- Number of messaging queue servers needed = Peak RPS / Messages per server
-- = 465,540 / 50,000
-- = 10 servers
-
-**Configuration**:
-- **AWS Service**: EC2 with Kafka or Amazon MSK (Managed Streaming for Kafka)
-- **Instance Type**: m5.large (2 vCPUs, 8GB RAM)
-- **Quantity**: 10
-
-### 5. Load Balancers
-
-**Assumptions**:
-- Load balancers should handle twice the peak concurrent connections for redundancy
-
-**Calculation**:
-- Number of load balancers needed = (Peak concurrent users / Connections per load balancer) * 2
-- Assuming each load balancer can handle 50,000 connections
-- = (93,108 / 50,000) * 2
-- = 4 load balancers
-
-**Configuration**:
-- **AWS Service**: Elastic Load Balancing (ELB)
-- **Quantity**: 4
-
-### 6. Monitoring and Alerting System
-
-**Assumptions**:
-- Monitoring infrastructure should be able to collect metrics from all servers and handle alerting
-
-**Calculation**:
-- Based on 466 application servers, 47 web servers, 30 database servers, and 10 messaging queue servers (total 553 servers)
-- Assume 1 monitoring server per 100 monitored servers
-
-**Configuration**:
-- **AWS Service**: CloudWatch
-- **Instance Type**: m5.large (2 vCPUs, 8GB RAM)
-- **Quantity**: 6 (rounding up)
-
-### 7. Backup Infrastructure
-
-**Assumptions**:
-- Ensure data redundancy and backup for databases and critical services
-
-**Calculation**:
-- Based on the number of database servers (30), assume 1 backup server for every 5 database servers
-
-**Configuration**:
-- **AWS Service**: S3 for backups, EC2 for backup servers
-- **Instance Type**: m5.large (2 vCPUs, 8GB RAM)
-- **Quantity**: 6 (rounding up)
-
-## Summary of Hardware Requirements
-
-| Component               | Quantity | AWS Service                     | Instance Type            | Configuration                |
-|-------------------------|----------|---------------------------------|--------------------------|------------------------------|
-| **Web Servers**         | 47       | EC2                             | m5.large                 | 2 vCPUs, 8GB RAM each        |
-| **Application Servers** | 466      | EC2                             | m5.2xlarge               | 8 vCPUs, 32GB RAM each       |
-| **Database Servers**    | 30       | RDS (MySQL/PostgreSQL)          | db.m5.4xlarge            | 16 vCPUs, 64GB RAM, 1TB SSD  |
-| **Messaging Queue**     | 10       | EC2 / Amazon MSK                | m5.large                 | 2 vCPUs, 8GB RAM each        |
-| **Load Balancers**      | 4        | Elastic Load Balancing (ELB)    | N/A                      | N/A                          |
-| **Monitoring Servers**  | 6        | EC2 / CloudWatch                | m5.large                 | 2 vCPUs, 8GB RAM each        |
-| **Backup Servers**      | 6        | EC2 / S3 for storage            | m5.large                 | 2 vCPUs, 8GB RAM each        |
-
-## Additional Considerations
-
-- **Network Bandwidth**: Ensure sufficient bandwidth to handle peak traffic loads, especially for real-time data synchronization.
-- **Redundancy and Failover**: Implement redundant network paths and failover mechanisms to ensure high availability.
-- **Scalability**: Design the system to scale horizontally, allowing the addition of more servers as needed.
-
-These estimates provide a starting point for planning and budgeting the backup website infrastructure to handle 1.86 million active users using AWS services. Adjustments may be necessary based on detailed performance testing and specific business requirements.
+Sure, let's refine the selection of AWS EC2 instance types for each component based on performance and cost optimization.
+
+1. **Frontend**:
+   - **Instance Type**: **T3.medium**
+   - **Rationale**: T3 instances are burstable, which means they are cost-effective and can handle occasional high-traffic scenarios. T3.medium offers a good balance of CPU and memory for handling frontend requests.
+
+2. **Web Servers**:
+   - **Instance Type**: **M6i.large**
+   - **Rationale**: M6i instances offer a balanced mix of CPU, memory, and network performance, ideal for web servers. M6i.large provides 2 vCPUs and 8 GiB of memory, suitable for most web server workloads.
+
+3. **Application Servers**:
+   - **Compute-Optimized**:
+     - **Instance Type**: **C6i.large**
+     - **Rationale**: C6i instances are designed for compute-intensive tasks, providing better price/performance for such workloads. C6i.large offers 2 vCPUs and 4 GiB of memory.
+   - **Memory-Optimized**:
+     - **Instance Type**: **R6i.large**
+     - **Rationale**: R6i instances are optimized for memory-intensive applications, ensuring sufficient RAM for tasks like data processing. R6i.large provides 2 vCPUs and 16 GiB of memory.
+
+4. **Database**:
+   - **Instance Type**: **I4i.large**
+   - **Rationale**: I4i instances are optimized for storage performance with NVMe SSDs, suitable for high-performance databases requiring low latency and high IOPS. I4i.large offers 2 vCPUs and 16 GiB of memory.
+
+5. **Messaging Queue**:
+   - **Instance Type**: **T3.small**
+   - **Rationale**: T3.small instances are cost-effective for handling messaging services, with burstable performance for handling intermittent high loads. T3.small provides 2 vCPUs and 2 GiB of memory.
+
+6. **Monitoring System**:
+   - **General-purpose**:
+     - **Instance Type**: **T3.small**
+     - **Rationale**: For basic monitoring tasks, T3.small instances are sufficient and cost-effective.
+   - **Memory-Optimized**:
+     - **Instance Type**: **R6i.large**
+     - **Rationale**: For storing and analyzing monitoring data, R6i.large instances provide the necessary memory and performance.
+
+### Summary of AWS EC2 Instance Types
+
+| Component          | Instance Type   | vCPUs | Memory (GiB) |
+|--------------------|-----------------|-------|--------------|
+| Frontend           | T3.medium       | 2     | 4            |
+| Web Servers        | M6i.large       | 2     | 8            |
+| App Servers (Compute-Optimized) | C6i.large | 2     | 4            |
+| App Servers (Memory-Optimized)  | R6i.large | 2     | 16           |
+| Database           | I4i.large       | 2     | 16           |
+| Messaging Queue    | T3.small        | 2     | 2            |
+| Monitoring (General-purpose) | T3.small | 2     | 2            |
+| Monitoring (Memory-Optimized) | R6i.large | 2     | 16           |
+
+### Cost Considerations
+- **Burstable Instances (T3)**: T3 instances are cost-effective for workloads that do not require constant high CPU usage but need the ability to burst occasionally.
+- **General-Purpose Instances (M6i)**: M6i instances provide a balance of CPU, memory, and network performance at a reasonable cost.
+- **Compute-Optimized Instances (C6i)**: C6i instances are priced to provide excellent performance for compute-intensive tasks.
+- **Memory-Optimized Instances (R6i)**: R6i instances are more expensive due to the higher memory, but they are necessary for memory-intensive tasks.
+- **Storage-Optimized Instances (I4i)**: I4i instances are more expensive but provide the necessary IOPS and low latency required for high-performance databases.
+
+By selecting these specific instance types, you can ensure that your backup website is both cost-effective and capable of handling the required workload during emergency scenarios.
