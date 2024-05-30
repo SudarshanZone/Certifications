@@ -1,3 +1,7 @@
+https://chatgpt.com/share/8d87cfa1-e462-464b-b8ea-d82b9321f717
+
+
+
 Sure, let's refine the selection of AWS EC2 instance types for each component based on performance and cost optimization.
 
 1. **Frontend**:
