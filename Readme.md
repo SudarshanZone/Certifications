@@ -1,245 +1,257 @@
-To estimate the number of users an EC2 instance type can handle based on its features, we can use the following formulas:
+### Summary Table: Backup Website Infrastructure and Data Usage
 
-1. **Network Bandwidth Calculation:**
-   - **Total Bandwidth (Mbps)** = Network Bandwidth (Gbps) * 1000
-   - **Requests per Second Supported by Bandwidth** = Total Bandwidth / Average Request Size (in MB) * 1024 (to convert MB to KB)
-   - **Estimated Users Based on Network Capacity** = Requests per Second Supported by Bandwidth / Requests per Second per User
+| **Component**        | **Instance Type** | **Quantity** | **Capacity per Instance** | **Total Capacity** | **Estimated Data Usage**        |
+|----------------------|-------------------|--------------|---------------------------|--------------------|----------------------------------|
+| **Frontend**         | T3.medium         | 2            | ~1,578,947 users          | ~3,157,894 users   | N/A (static assets)             |
+| **Web Servers**      | M5.large          | 2            | ~239,520 users            | ~479,040 users     | N/A                              |
+| **Application Servers** | C5.large       | 2            | ~3,594 users              | ~7,188 users       | 32 KB/user/hour                 |
+| **Database**         | R5.large          | 2            | ~11,976 users             | ~23,952 users      | Dependent on user transactions  |
+| **Messaging Queue**  | T3.medium         | 2            | ~11,976 users             | ~23,952 users      | 32 KB/user/hour (aggregated)    |
+| **Total Data Usage** | -                 | -            | -                         | -                  | 224 MB/hour for 7,188 users     |
 
-2. **CPU Capacity Calculation:**
-   - **Total Requests per Second Supported by CPU** = Number of vCPUs * Requests per Second per Core
-   - **Estimated Users Based on CPU Capacity** = Total Requests per Second Supported by CPU / Requests per Second per User
+### Data Usage Breakdown per Operation
 
-3. **Memory Capacity Calculation:**
-   - **Total Memory Available (MiB)** = Memory (GiB) * 1024
-   - **Estimated Users Based on Memory Capacity** = Total Memory Available / Memory Usage per User (in MiB)
+| **Operation**            | **Request Size** | **Response Size** | **Total Size** | **Frequency (per hour)** | **Total Data per User (bytes)** |
+|--------------------------|------------------|-------------------|----------------|--------------------------|----------------------------------|
+| **Login**                | 279 bytes        | 317 bytes         | 596 bytes      | 1                        | 596                              |
+| **Sell Stock**           | 317 bytes        | 417 bytes         | 734 bytes      | 10                       | 7,340                            |
+| **View Transaction History** | 224 bytes    | 1,241 bytes       | 1,465 bytes    | 5                        | 7,325                            |
+| **Access Portfolio**     | 220 bytes        | 2,265 bytes       | 2,485 bytes    | 5                        | 12,425                           |
+| **Live Market Rate**     | -                | -                 | 50 bytes       | 100                      | 5,000                            |
+| **Total Data per User per Hour** | -         | -                 | -              | -                        | 32,686 ≈ 32 KB                  |
 
-4. **Overall Estimate:**
-   - **Estimated Users** = Minimum of the estimates from network, CPU, and memory capacity calculations
+### Cost Cutting and Optimization Summary
 
-Where:
-- **Network Bandwidth (Gbps)**: Maximum network bandwidth provided by the EC2 instance type in gigabits per second (Gbps).
-- **Average Request Size**: Average size of a request in megabytes (MB).
-- **Requests per Second per User**: Number of requests a single user generates per second.
-- **Number of vCPUs**: Number of virtual CPUs provided by the EC2 instance type.
-- **Requests per Second per Core**: Number of requests a single CPU core can handle per second.
-- **Memory (GiB)**: Total memory available on the EC2 instance type in gibibytes (GiB).
-- **Memory Usage per User**: Amount of memory consumed by each user in MiB.
+| **Component**              | **Optimization Strategy**                                              |
+|----------------------------|-------------------------------------------------------------------------|
+| **Frontend**               | Use AWS S3 and CloudFront for static assets, implement caching          |
+| **Web Servers**            | Use AWS Auto Scaling, optimize code and database queries                |
+| **Application Servers**    | Use AWS Auto Scaling, optimize code and database queries                |
+| **Database**               | Use read replicas, implement database caching (Redis/Memcached)        |
+| **Messaging Queue**        | Optimize RabbitMQ configuration, use clustering/high availability      |
+| **Monitoring and Alerts**  | Use AWS CloudWatch, implement automated failover mechanisms            |
 
-These formulas provide an approximate estimate and may vary based on various factors such as application workload, system configurations, and user behavior. Adjustments may be necessary based on specific use cases and performance testing.
+### AWS Infrastructure and Capacity
 
+| **Component**              | **Total Capacity**       | **Notes**                                        |
+|----------------------------|--------------------------|--------------------------------------------------|
+| **Frontend**               | ~3,157,894 users         | Handled by S3 and CloudFront for static assets   |
+| **Web Servers**            | ~479,040 users           | Nginx for web server load balancing              |
+| **Application Servers**    | ~7,188 users             | Go for API and services                          |
+| **Database**               | ~23,952 users            | PostgreSQL/MySQL with read replicas              |
+| **Messaging Queue**        | ~23,952 users            | RabbitMQ for message queuing                     |
+| **Total Data Usage**       | 224 MB/hour for 7,188 users | Based on 32 KB/user/hour                         |
 
+This table summarizes the key components, instance types, capacities, data usage, and optimization strategies for the backup website infrastructure.
 
+### Backup Website High-Level Design (HLD) for Order Square-Off
 
+---
 
-%%%%%%%%%%%%%%%%%©©©©©©©©©©©©©©©©©©©
+### Flow Diagram:
 
-Given the detailed breakdown of request and response sizes, we need to update the calculations for the number of users each component can handle. This will allow us to determine the minimum number of instances required while ensuring cost-effectiveness and scalability.
+1. **User**
+2. **Frontend**
+3. **Load Balancer (AWS ELB)**
+4. **Web Server (Nginx)**
+5. **Load Balancer (AWS ELB)**
+6. **Application Server (Go)**
+7. **Exchange Adaptor (TCP/IP)**
+8. **API Gateway (Go)**
+9. **Messaging Queue (RabbitMQ)**
+10. **Application Server (Go)**
+11. **Database Connected Application Server (Go)**
+12. **Existing System Database (PostgreSQL/MySQL)**
+13. **BOD Syncing with Database**
+14. **Monitoring System**
+15. **Control to Backup Application (IRRA Platform)**
 
-### Updated Assumptions and Metrics:
-1. **Average Request Sizes:**
-   - Login Request: 279 bytes
-   - Login Response: 317 bytes
-   - Selling Stock Request: 317 bytes
-   - Selling Stock Response: 417 bytes
-   - Viewing Transaction History Request: 224 bytes
-   - Viewing Transaction History Response: 1241 bytes
-   - Accessing Portfolio Request: 220 bytes
-   - Accessing Portfolio Response: 2265 bytes
-   - Average request size (simplified): 450 bytes
-   - Average response size (simplified): 500 bytes
+---
 
-2. **Frontend Requests:**
-   - Average requests per user: 10 per minute
-   - Total request rate: 10 requests/user/min * (450 bytes/request + 500 bytes/response) = 9500 bytes/user/min ≈ 9.5 KB/user/min
+### Technology Stack:
 
-3. **Web Servers (Nginx) Handling:**
-   - Nginx can handle around 10,000 requests per second (rps) on a large instance.
-   - Each M5.large instance: 10,000 rps
-   - We have 2 M5.large instances: 2 * 10,000 rps = 20,000 rps
+- **Backend:**
+  - API: Go
+  - Services: Go
+  - Automation/report scripts: Python
+  - TAP application: C++
+- **Frontend:**
+  - ReactJS
+- **Databases:**
+  - PostgreSQL, MySQL
+- **OS:**
+  - Linux
+- **DevOps & CI/CD:**
+  - Docker, Jenkins
+- **Developer Tooling:**
+  - GitHub
+- **Queues and Monitoring:**
+  - RabbitMQ
+- **Webservers:**
+  - Nginx
 
-4. **Application Servers (Node.js):**
-   - Average requests per second: 300 rps for a C5.xlarge instance (realistic load, considering business logic complexity)
-   - We have 2 C5.xlarge instances: 2 * 300 rps = 600 rps
+---
 
-5. **Database (MySQL on RDS):**
-   - R5.large can handle around 1,000 transactions per second (tps)
-   - We have 2 R5.large instances: 2 * 1,000 tps = 2,000 tps
+### AWS Infrastructure Components:
+
+1. **Frontend:**
+   - **Instance Type:** T3.medium
+   - **Quantity:** 2 instances
+   - **Capacity per Instance:** ~1,578,947 users (for static asset delivery)
+   - **Total Capacity:** ~3,157,894 users
+
+2. **Load Balancers:**
+   - **AWS ELB:** Distributes incoming application traffic across multiple targets (web servers, application servers).
+
+3. **Web Servers:**
+   - **Instance Type:** M5.large
+   - **Quantity:** 2 instances
+   - **Capacity per Instance:** ~239,520 users
+   - **Total Capacity:** ~479,040 users
+
+4. **Application Servers:**
+   - **Instance Type:** C5.large
+   - **Quantity:** 2 instances
+   - **Capacity per Instance:** ~3,594 users
+   - **Total Capacity:** ~7,188 users
+
+5. **Database:**
+   - **Instance Type:** R5.large (PostgreSQL/MySQL)
+   - **Quantity:** 2 instances
+   - **Capacity per Instance:** ~11,976 users
+   - **Total Capacity:** ~23,952 users
 
 6. **Messaging Queue (RabbitMQ):**
-   - A T3.large instance can handle around 1,000 messages per second.
-   - We have 2 T3.large instances: 2 * 1,000 = 2,000 messages per second
-
-### Calculation of User Capacity
-
-#### 1. **Frontend Handling Capacity**
-- Total data throughput capacity: Each T3.large instance has a network bandwidth of up to 5 Gbps.
-- Total throughput for 2 instances: 2 * 5 Gbps = 10 Gbps
-- Converting to MBps: 10 Gbps * 125 = 1250 MBps
-- Average data per user per minute: 9.5 KB/user/min ≈ 0.0095 MB/user/min
-- Users supported: 1250 MBps / (0.0095 MB/user/min / 60 seconds) ≈ 7,894,737 users
-
-#### 2. **Web Server Handling Capacity**
-- Total request handling capacity: 20,000 rps
-- Average requests per user per second: 10 requests/user/min / 60 seconds ≈ 0.167 rps/user
-- Users supported: 20,000 rps / 0.167 rps/user ≈ 119,760 users
-
-#### 3. **Application Server Handling Capacity**
-- Total request handling capacity: 600 rps
-- Average requests per user per second: 0.167 rps/user
-- Users supported: 600 rps / 0.167 rps/user ≈ 3,593 users
-
-#### 4. **Database Handling Capacity**
-- Total transaction handling capacity: 2,000 tps
-- Average transactions per user per second: Assuming 1 transaction per request = 0.167 tps/user
-- Users supported: 2,000 tps / 0.167 tps/user ≈ 11,976 users
-
-#### 5. **Messaging Queue Handling Capacity**
-- Total message handling capacity: 2,000 messages per second
-- Average messages per user per second: Assuming 1 message per request = 0.167 mps/user
-- Users supported: 2,000 mps / 0.167 mps/user ≈ 11,976 users
-
-### Bottleneck Analysis and Final Estimation:
-- The application servers (C5.xlarge) are still the primary bottleneck in this setup, supporting approximately 3,593 users.
-- Database and messaging queue capacities are higher but should be monitored as load increases.
-
-### AWS EC2 Instance Requirements Summary:
-
-| Component             | Instance Type | Total Instances | Users Supported per Instance | Total Users Supported |
-|-----------------------|---------------|-----------------|------------------------------|-----------------------|
-| Frontend              | T3.large      | 2               | 3,947,368                    | 7,894,737             |
-| Web Servers           | M5.large      | 2               | 59,880                       | 119,760               |
-| Application Servers   | C5.xlarge     | 2               | 1,796.5                      | 3,593                 |
-| Database (MySQL RDS)  | R5.large      | 2               | 5,988                        | 11,976                |
-| Messaging Queue       | T3.large      | 2               | 5,988                        | 11,976                |
-
-### Conclusion:
-The proposed backup website infrastructure can handle approximately 3,593 users simultaneously, with the application servers (C5.xlarge) being the limiting factor. This setup ensures business continuity with minimized infrastructure while providing a robust solution for emergency scenarios.
-
-**Note:** These calculations are based on average load metrics and may vary with actual user behavior. It's recommended to perform load testing to fine-tune the infrastructure requirements further.
+   - **Instance Type:** T3.medium
+   - **Quantity:** 2 instances
+   - **Capacity per Instance:** ~11,976 users
+   - **Total Capacity:** ~23,952 users
 
 ---
 
-### Document Representation
+### Data Usage Calculation:
+
+1. **Average Request and Response Sizes:**
+
+   - **Login:**
+     - Request: ~279 bytes
+     - Response: ~317 bytes
+     - Total: ~596 bytes
+
+   - **Selling Stock:**
+     - Request: ~317 bytes
+     - Response: ~417 bytes
+     - Total: ~734 bytes
+
+   - **Viewing Transaction History:**
+     - Request: ~224 bytes
+     - Response: ~1,241 bytes
+     - Total: ~1,465 bytes
+
+   - **Accessing Portfolio:**
+     - Request: ~220 bytes
+     - Response: ~2,265 bytes
+     - Total: ~2,485 bytes
+
+   - **Live Market Rate (WebSocket):**
+     - Message: ~50 bytes per message
+
+2. **Data Usage per User per Hour:**
+
+   - **Login:**
+     - 1 time/hour
+     - Data: 596 bytes
+
+   - **Sell Stock:**
+     - 10 times/hour
+     - Data: 7,340 bytes
+
+   - **View Transaction History:**
+     - 5 times/hour
+     - Data: 7,325 bytes
+
+   - **Access Portfolio:**
+     - 5 times/hour
+     - Data: 12,425 bytes
+
+   - **Live Market Rate Updates:**
+     - 100 messages/hour
+     - Data: 5,000 bytes
+
+   - **Total Data per User per Hour:**
+     - 596 + 7,340 + 7,325 + 12,425 + 5,000 = 32,686 bytes ≈ 32 KB
+
+3. **Total Data Usage for All Users:**
+
+   - **Assuming 7,188 users (limited by the Application Server capacity):**
+     - Total Data per Hour: 32 KB/user * 7,188 users = 229,376 KB ≈ 224 MB
 
 ---
 
-**Designing a Backup Website for Order Square-Off to Ensure Business Continuity in Emergency Scenarios**
+### AWS EC2 Instance Requirements:
 
-**Problem Statement:**
-In the event of a critical failure in our main website infrastructure during market hours, we must ensure seamless order square-off functionalities to prevent financial losses for our users. The proposed backup website, operating on an independent technology stack, aims to address this challenge by enabling continuous operations even when the primary website is inaccessible.
+#### 1. **Frontend (T3.medium):**
 
-**Challenges:**
-1. Data Synchronization and Integrity
-2. Activation and Switching Mechanism
-3. User Experience Continuity
-4. Authentication and Security
-5. Performance and Scalability
+- **Instance Type:** T3.medium
+- **Quantity:** 2 instances
+- **Capacity per Instance:** ~1,578,947 users
+- **Total Capacity:** ~3,157,894 users
 
-**Objectives:**
-1. Data Preparation and Dumping
-2. Backup Activation
-3. Real-time Data Synchronization
-4. User Interface Enablement
-5. User Interaction
-6. Database Update upon Primary System Recovery
-7. Error Handling and Monitoring
+#### 2. **Web Servers (M5.large):**
 
-**Current Scenario:**
-The main website is connected to the NSE API and the main database. We are developing a backup website to be activated if the main website fails. This backup website will handle the core functionalities:
-1. Square Off - Close Open Positions
-2. View Positions
-3. Access Financial Information
-4. Login Authentication and Profile Management
+- **Instance Type:** M5.large
+- **Quantity:** 2 instances
+- **Capacity per Instance:** ~239,520 users
+- **Total Capacity:** ~479,040 users
 
-**Infrastructure Requirements and Estimation:**
+#### 3. **Application Servers (C5.large):**
 
-| Component             | Instance Type | Total Instances | Users Supported per Instance | Total Users Supported |
-|-----------------------|---------------|-----------------|------------------------------|-----------------------|
-| Frontend              | T3.large      | 2               | 3,947,368                    | 7,894,737             |
-| Web Servers           | M5.large      | 2               | 59,880                       | 119,760               |
-| Application Servers   | C5.xlarge     | 2               | 1,796.5                      | 3,593                 |
-| Database (MySQL RDS)  | R5.large      | 2               | 5,988                        | 11,976                |
-| Messaging Queue       | T3.large      | 2               | 5,988                        | 11,976                |
+- **Instance Type:** C5.large
+- **Quantity:** 2 instances
+- **Capacity per Instance:** ~3,594 users
+- **Total Capacity:** ~7,188 users
 
-### User Handling Calculation:
+#### 4. **Database (PostgreSQL/MySQL) (R5.large):**
 
-#### Average User Load:
-- Request size: 450 bytes
-- Response size: 500 bytes
-- Total data per user per minute: 9500 bytes (≈ 9.5 KB)
-- Average requests per user per minute: 10
+- **Instance Type:** R5.large
+- **Quantity:** 2 instances
+- **Capacity per Instance:** ~11,976 users
+- **Total Capacity:** ~23,952 users
 
-#### Capacity Analysis:
-- **Frontend:** Can support up to 7,894,737 users.
-- **Web Servers:** Can support up to 119,760 users.
-- **Application Servers:** Can support up to 3,593 users.
-- **Database:** Can support up to 11,976 users.
-- **Messaging Queue:** Can support up to 11,976 users.
+#### 5. **Messaging Queue (RabbitMQ) (T3.medium):**
 
-**Conclusion:**
-The backup website infrastructure can handle approximately 3,593 users simultaneously. This setup ensures business continuity with minimized infrastructure while providing a robust solution for emergency scenarios.
+- **Instance Type:** T3.medium
+- **Quantity:** 2 instances
+- **Capacity per Instance:** ~11,976 users
+- **Total Capacity:** ~23,952 users
 
+---
 
+### Cost Cutting and Optimization:
 
-.
+1. **Frontend:**
+   - Use AWS S3 and CloudFront for serving static assets to reduce the load on EC2 instances.
+   - Implement caching strategies.
 
+2. **Web Servers and Application Servers:**
+   - Use AWS Auto Scaling to dynamically adjust the number of instances based on traffic.
+   - Optimize application code and database queries to reduce CPU and memory usage.
 
+3. **Database:**
+   - Use read replicas to offload read queries from the primary database.
+   - Implement database caching using Redis or Memcached.
 
+4. **Messaging Queue:**
+   - Optimize RabbitMQ configuration to handle peak loads efficiently.
+   - Use clustering and high availability configurations.
 
-_____________________________________
+5. **Monitoring and Alerts:**
+   - Use AWS CloudWatch for monitoring and setting up alerts.
+   - Implement automated failover mechanisms.
 
-Sure, let's estimate how many users the proposed AWS setup can handle and provide the calculations for it. We need to consider the capabilities of each component (frontend, web servers, application servers, database, and messaging queue) and the expected load per user.
+---
 
-### Assumptions and Metrics:
-1. **Frontend Requests:**
-   - Average requests per user: 10 per minute
-   - Average request size: 100 KB
-   - Total request rate: 10 requests/user/min * 100 KB/request = 1 MB/user/min
+### Summary:
 
-2. **Web Servers (Nginx) Handling:**
-   - Nginx can handle around 10,000 requests per second (rps) on a large instance.
-   - Each M5.large instance: 10,000 rps
-   - We have 2 M5.large instances: 2 * 10,000 rps = 20,000 rps
+By utilizing the given technology stack and AWS infrastructure, the backup website can effectively handle the required user load while ensuring cost efficiency. The optimized instance types and configurations allow for seamless scaling and robust performance, ensuring continuous operations during failover scenarios. The calculated data usage provides a clear understanding of the system's capacity to handle user requests efficiently.
 
-3. **Application Servers (Node.js):**
-   - Average requests per second: 300 rps for a C5.xlarge instance (realistic load, considering business logic complexity)
-   - We have 2 C5.xlarge instances: 2 * 300 rps = 600 rps
-
-4. **Database (MySQL on RDS):**
-   - R5.large can handle around 1,000 transactions per second (tps)
-   - We have 2 R5.large instances: 2 * 1,000 tps = 2,000 tps
-
-5. **Messaging Queue (RabbitMQ):**
-   - A T3.large instance can handle around 1,000 messages per second.
-   - We have 2 T3.large instances: 2 * 1,000 = 2,000 messages per second
-
-### Calculation of User Capacity
-
-#### 1. **Frontend Handling Capacity**
-- Total data throughput capacity: Each T3.large instance has a network bandwidth of up to 5 Gbps.
-- Total throughput for 2 instances: 2 * 5 Gbps = 10 Gbps
-- Converting to MBps: 10 Gbps * 125 = 1250 MBps
-- Average data per user per minute: 1 MB/user/min
-- Users supported: 1250 MBps / (1 MB/user/min / 60 seconds) = 75,000 users
-
-#### 2. **Web Server Handling Capacity**
-- Total request handling capacity: 20,000 rps
-- Average requests per user per second: 10 requests/user/min / 60 seconds = 0.167 rps/user
-- Users supported: 20,000 rps / 0.167 rps/user = 119,760 users
-
-#### 3. **Application Server Handling Capacity**
-- Total request handling capacity: 600 rps
-- Average requests per user per second: 0.167 rps/user
-- Users supported: 600 rps / 0.167 rps/user = 3,593 users
-
-#### 4. **Database Handling Capacity**
-- Total transaction handling capacity: 2,000 tps
-- Average transactions per user per second: Assuming 1 transaction per request = 0.167 tps/user
-- Users supported: 2,000 tps / 0.167 tps/user = 11,976 users
-
-#### 5. **Messaging Queue Handling Capacity**
-- Total message handling capacity: 2,000 messages per second
-- Average messages per user per second: Assuming 1 message per request = 0.167 mps/user
-- Users supported: 2,000 mps / 0.167 mps/user = 11,976 users
-
-      | 2 
