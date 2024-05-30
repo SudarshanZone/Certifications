@@ -1,4 +1,78 @@
+Sure, let's estimate how many users the proposed AWS setup can handle and provide the calculations for it. We need to consider the capabilities of each component (frontend, web servers, application servers, database, and messaging queue) and the expected load per user.
 
+### Assumptions and Metrics:
+1. **Frontend Requests:**
+   - Average requests per user: 10 per minute
+   - Average request size: 100 KB
+   - Total request rate: 10 requests/user/min * 100 KB/request = 1 MB/user/min
+
+2. **Web Servers (Nginx) Handling:**
+   - Nginx can handle around 10,000 requests per second (rps) on a large instance.
+   - Each M5.large instance: 10,000 rps
+   - We have 2 M5.large instances: 2 * 10,000 rps = 20,000 rps
+
+3. **Application Servers (Node.js):**
+   - Average requests per second: 300 rps for a C5.xlarge instance (realistic load, considering business logic complexity)
+   - We have 2 C5.xlarge instances: 2 * 300 rps = 600 rps
+
+4. **Database (MySQL on RDS):**
+   - R5.large can handle around 1,000 transactions per second (tps)
+   - We have 2 R5.large instances: 2 * 1,000 tps = 2,000 tps
+
+5. **Messaging Queue (RabbitMQ):**
+   - A T3.large instance can handle around 1,000 messages per second.
+   - We have 2 T3.large instances: 2 * 1,000 = 2,000 messages per second
+
+### Calculation of User Capacity
+
+#### 1. **Frontend Handling Capacity**
+- Total data throughput capacity: Each T3.large instance has a network bandwidth of up to 5 Gbps.
+- Total throughput for 2 instances: 2 * 5 Gbps = 10 Gbps
+- Converting to MBps: 10 Gbps * 125 = 1250 MBps
+- Average data per user per minute: 1 MB/user/min
+- Users supported: 1250 MBps / (1 MB/user/min / 60 seconds) = 75,000 users
+
+#### 2. **Web Server Handling Capacity**
+- Total request handling capacity: 20,000 rps
+- Average requests per user per second: 10 requests/user/min / 60 seconds = 0.167 rps/user
+- Users supported: 20,000 rps / 0.167 rps/user = 119,760 users
+
+#### 3. **Application Server Handling Capacity**
+- Total request handling capacity: 600 rps
+- Average requests per user per second: 0.167 rps/user
+- Users supported: 600 rps / 0.167 rps/user = 3,593 users
+
+#### 4. **Database Handling Capacity**
+- Total transaction handling capacity: 2,000 tps
+- Average transactions per user per second: Assuming 1 transaction per request = 0.167 tps/user
+- Users supported: 2,000 tps / 0.167 tps/user = 11,976 users
+
+#### 5. **Messaging Queue Handling Capacity**
+- Total message handling capacity: 2,000 messages per second
+- Average messages per user per second: Assuming 1 message per request = 0.167 mps/user
+- Users supported: 2,000 mps / 0.167 mps/user = 11,976 users
+
+### Bottleneck Analysis and Final Estimation:
+- The application servers (C5.xlarge) are the primary bottleneck in this setup, supporting 3,593 users.
+- Database and messaging queue capacities are higher but should be monitored as load increases.
+
+### AWS EC2 Instance Requirements Summary:
+
+| Component             | Instance Type | Total Instances | Users Supported per Instance | Total Users Supported |
+|-----------------------|---------------|-----------------|------------------------------|-----------------------|
+| Frontend              | T3.large      | 2               | 37,500                       | 75,000                |
+| Web Servers           | M5.large      | 2               | 59,880                       | 119,760               |
+| Application Servers   | C5.xlarge     | 2               | 1,796.5                      | 3,593                 |
+| Database (MySQL RDS)  | R5.large      | 2               | 5,988                        | 11,976                |
+| Messaging Queue       | T3.large      | 2               | 5,988                        | 11,976                |
+
+### Conclusion:
+The proposed backup website infrastructure can handle approximately 3,593 users simultaneously, with the application servers (C5.xlarge) being the limiting factor. This setup ensures business continuity with minimized infrastructure while providing a robust solution for emergency scenarios.
+
+**Note:** These calculations are based on average load metrics and may vary with actual user behavior. It's recommended to perform load testing to fine-tune the infrastructure requirements further.
+
+
+_____________--+-__&---------
 
 
 
