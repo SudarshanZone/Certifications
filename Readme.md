@@ -1,3 +1,38 @@
+To estimate the number of users an EC2 instance type can handle based on its features, we can use the following formulas:
+
+1. **Network Bandwidth Calculation:**
+   - **Total Bandwidth (Mbps)** = Network Bandwidth (Gbps) * 1000
+   - **Requests per Second Supported by Bandwidth** = Total Bandwidth / Average Request Size (in MB) * 1024 (to convert MB to KB)
+   - **Estimated Users Based on Network Capacity** = Requests per Second Supported by Bandwidth / Requests per Second per User
+
+2. **CPU Capacity Calculation:**
+   - **Total Requests per Second Supported by CPU** = Number of vCPUs * Requests per Second per Core
+   - **Estimated Users Based on CPU Capacity** = Total Requests per Second Supported by CPU / Requests per Second per User
+
+3. **Memory Capacity Calculation:**
+   - **Total Memory Available (MiB)** = Memory (GiB) * 1024
+   - **Estimated Users Based on Memory Capacity** = Total Memory Available / Memory Usage per User (in MiB)
+
+4. **Overall Estimate:**
+   - **Estimated Users** = Minimum of the estimates from network, CPU, and memory capacity calculations
+
+Where:
+- **Network Bandwidth (Gbps)**: Maximum network bandwidth provided by the EC2 instance type in gigabits per second (Gbps).
+- **Average Request Size**: Average size of a request in megabytes (MB).
+- **Requests per Second per User**: Number of requests a single user generates per second.
+- **Number of vCPUs**: Number of virtual CPUs provided by the EC2 instance type.
+- **Requests per Second per Core**: Number of requests a single CPU core can handle per second.
+- **Memory (GiB)**: Total memory available on the EC2 instance type in gibibytes (GiB).
+- **Memory Usage per User**: Amount of memory consumed by each user in MiB.
+
+These formulas provide an approximate estimate and may vary based on various factors such as application workload, system configurations, and user behavior. Adjustments may be necessary based on specific use cases and performance testing.
+
+
+
+
+
+%%%%%%%%%%%%%%%%%©©©©©©©©©©©©©©©©©©©
+
 Given the detailed breakdown of request and response sizes, we need to update the calculations for the number of users each component can handle. This will allow us to determine the minimum number of instances required while ensuring cost-effectiveness and scalability.
 
 ### Updated Assumptions and Metrics:
