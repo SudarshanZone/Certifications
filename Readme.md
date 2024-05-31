@@ -1,126 +1,97 @@
-### Optimized Backup Website for Order Square-Off: Detailed Estimations and AWS Requirements
+### Back-of-the-Envelope Calculations for Hardware Requirements
 
-**Objective:** Ensure seamless order square-off functionalities in the event of a critical failure in the main website infrastructure with cost-effective AWS instance usage.
+#### Assumptions:
+- **Peak users:** 5.5 lakhs (550,000)
+- **1% of peak users during peak duration (half hour):** 0.01 * 550,000 = 5,500 users
+- **Peak duration:** Half hour (30 minutes)
+- **Average order requests per user:** 2 orders per minute (considering active trading scenario)
 
-#### User Base Estimation
+#### Components and Their Requirements:
 
-**Total Users:** 10,88,961
-**Peak Simultaneous Users:** 10% of total users (approx. 1,08,896 users)
-**Request Size Calculation:**
-- **Average Request Size:** 450 bytes (based on detailed request and response headers analysis)
-- **Request Rate:** 5 requests per user per minute during peak load
+1. **Frontend (Web Servers):**
+   - Each web server can handle approximately 500 concurrent users.
+   - **Total required web servers:** 
+     \[
+     \frac{5,500 \text{ users}}{500 \text{ users/server}} = 11 \text{ servers}
+     \]
 
-#### Optimized Estimation of Server Requirements
+2. **Load Balancer:**
+   - To distribute traffic among web servers efficiently.
+   - Assume we need 2 load balancers for redundancy.
 
-**Web Servers:**
-- **Request Rate:** 1,08,896 users * 5 requests/minute = 5,44,480 requests/minute
-- **Requests per Second (RPS):** 5,44,480 / 60 = 9,075 RPS
-- **Web Server Throughput:** Assuming each web server can handle 1,000 RPS, we would need approximately 10 web servers (9,075 / 1,000 ≈ 10)
+3. **Application Servers:**
+   - Each application server can handle approximately 250 concurrent sessions.
+   - **Total required application servers:** 
+     \[
+     \frac{5,500 \text{ sessions}}{250 \text{ sessions/server}} = 22 \text{ servers}
+     \]
 
-**Application Servers:**
-- Similar throughput to web servers
-- Number of servers needed: 10
+4. **Database Servers:**
+   - Assume the primary database can handle up to 10,000 read/write operations per second.
+   - Considering high availability, we would need at least 2 database servers (Primary and Standby).
+   - For peak operations:
+     \[
+     5,500 \text{ users} \times 2 \text{ orders/min} \times 30 \text{ mins} = 330,000 \text{ transactions}
+     \]
+   - Transactions per second (TPS):
+     \[
+     \frac{330,000 \text{ transactions}}{30 \text{ mins} \times 60 \text{ seconds}} = 183 \text{ TPS}
+     \]
+   - A single database server with 10,000 TPS capability is more than sufficient.
 
-**Database Size:**
-- **User Data:** Assuming 1 KB per user, total user data = 10,88,961 * 1 KB = ~1 GB
-- **Transaction Data:** Assuming 50 KB per transaction, with 5 transactions/user/day, total transaction data = 10,88,961 users * 50 KB * 5 transactions ≈ 2.5 TB/day
-- **Backup Data Storage:** For a 7-day backup period, total storage required = 7 * 2.5 TB = 17.5 TB
+5. **Messaging Queue:**
+   - Assume using RabbitMQ/Kafka where each node can handle 50,000 messages per second.
+   - For redundancy and load balancing, assume 3 nodes (1 primary and 2 replicas).
 
-**Database Servers:**
-- For high IOPS and throughput, considering a primary and replica setup:
-  - **Primary DB Server:** 1 high-performance instance
-  - **Replica DB Server:** 1 for failover
-  - **Backup Storage:** 20 TB storage
+6. **Monitoring System:**
+   - Assume lightweight monitoring for each component.
+   - 1-2 servers dedicated to monitoring tools like Prometheus/Grafana.
 
-#### AWS EC2 Instance Recommendations
+#### Summary:
 
-**Web Servers:**
-- **Instance Type:** t3.large (2 vCPU, 8 GB RAM)
-- **Number of Instances:** 10
-- **Users Handled per Instance:** 10,000 RPS / 1,000 RPS per instance = 10,000 users per instance
-- **Total Users Handled:** 10 instances * 10,000 users = 100,000 users
+- **Frontend Web Servers:** 11 servers
+- **Load Balancers:** 2 units
+- **Application Servers:** 22 servers
+- **Database Servers:** 2 servers (1 primary, 1 standby)
+- **Messaging Queue Nodes:** 3 nodes
+- **Monitoring Servers:** 2 servers
 
-**Application Servers:**
-- **Instance Type:** t3.large (2 vCPU, 8 GB RAM)
-- **Number of Instances:** 10
-- **Users Handled per Instance:** 10,000 users
-- **Total Users Handled:** 10 instances * 10,000 users = 100,000 users
+#### Estimation of Hardware Specifications:
+- **Web Servers:**
+  - CPU: 4 cores
+  - RAM: 16 GB
+  - Storage: 100 GB SSD
 
-**Database Servers:**
-- **Primary DB Server:** r5.2xlarge (8 vCPU, 64 GB RAM, EBS-optimized)
-- **Replica DB Server:** r5.2xlarge (8 vCPU, 64 GB RAM, EBS-optimized)
-- **Backup Storage:** EBS volumes with 20 TB capacity
-- **Users Handled per DB Server:** Supports up to 1,08,896 users (since these are high-performance instances and designed to handle significant load)
+- **Application Servers:**
+  - CPU: 8 cores
+  - RAM: 32 GB
+  - Storage: 200 GB SSD
 
-**Load Balancers:**
-- **Type:** Application Load Balancer (ALB)
-- **Number of Load Balancers:** 2 (one for web servers, one for application servers)
+- **Database Servers:**
+  - CPU: 16 cores
+  - RAM: 64 GB
+  - Storage: 1 TB SSD (RAID 10 configuration)
 
-**Monitoring and Automation:**
-- **CloudWatch:** For monitoring and alerts
-- **Lambda:** For automation scripts to handle failover
-- **SNS:** For notifications
+- **Messaging Queue Nodes:**
+  - CPU: 8 cores
+  - RAM: 32 GB
+  - Storage: 500 GB SSD
 
-**Network Configuration:**
-- **VPC with Subnets:** Distributed across multiple availability zones for high availability
+- **Monitoring Servers:**
+  - CPU: 4 cores
+  - RAM: 16 GB
+  - Storage: 500 GB SSD
 
-#### Cost Estimation in INR
+### Total Hardware Requirement Summary:
 
-**Exchange Rate:** 1 USD = 80 INR (approx.)
+| Component                | Quantity | CPU (Total Cores) | RAM (Total GB) | Storage (Total GB) |
+|--------------------------|----------|-------------------|----------------|--------------------|
+| Web Servers              | 11       | 44                | 176            | 1100               |
+| Load Balancers           | 2        | 8                 | 32             | 200                |
+| Application Servers      | 22       | 176               | 704            | 4400               |
+| Database Servers         | 2        | 32                | 128            | 2000               |
+| Messaging Queue Nodes    | 3        | 24                | 96             | 1500               |
+| Monitoring Servers       | 2        | 8                 | 32             | 1000               |
 
-**EC2 Instances (Web and Application Servers):**
-- **t3.large:** 
-  - **Hourly Cost:** ~$0.0832 (on-demand pricing)
-  - **Monthly Cost (USD):** 10 instances * 0.0832 * 24 * 30 ≈ $598.56
-  - **Monthly Cost (INR):** 598.56 * 80 ≈ ₹47,884.80
-
-**Database Servers:**
-- **r5.2xlarge:** 
-  - **Hourly Cost:** ~$0.504 (on-demand pricing)
-  - **Monthly Cost (USD):** 2 * 0.504 * 24 * 30 ≈ $725.76
-  - **Monthly Cost (INR):** 725.76 * 80 ≈ ₹58,060.80
-
-**EBS Storage:**
-- **20 TB:** 
-  - **Monthly Cost (USD):** $0.10 per GB ≈ $2,000
-  - **Monthly Cost (INR):** 2,000 * 80 ≈ ₹1,60,000
-
-**Load Balancers:**
-- **ALB:** 
-  - **Monthly Cost (USD):** ~$18.25 (per Load Balancer) + $0.008 per LCU-hour
-  - **Monthly Cost Estimation (USD):** 2 ALBs * $18.25 + LCU-hours cost ≈ $100
-  - **Monthly Cost (INR):** 100 * 80 ≈ ₹8,000
-
-**Total Monthly Cost (INR):**
-- **EC2 Instances (Web and App Servers):** ₹47,884.80
-- **Database Servers:** ₹58,060.80
-- **EBS Storage:** ₹1,60,000
-- **Load Balancers:** ₹8,000
-- **Total:** ₹2,73,945.60
-
-#### Table Format Data
-
-| Component            | Instance Type       | Number of Instances | Hourly Cost (USD) | Monthly Cost (USD) | Monthly Cost (INR) | Users Handled per Instance | Total Users Handled |
-|----------------------|---------------------|---------------------|-------------------|---------------------|--------------------|----------------------------|---------------------|
-| Web Servers          | t3.large            | 10                  | $0.0832           | $598.56             | ₹47,884.80         | 10,000                     | 100,000             |
-| Application Servers  | t3.large            | 10                  | $0.0832           | $598.56             | ₹47,884.80         | 10,000                     | 100,000             |
-| Primary DB Server    | r5.2xlarge          | 1                   | $0.504            | $362.88             | ₹29,030.40         | 1,08,896                   | 1,08,896            |
-| Replica DB Server    | r5.2xlarge          | 1                   | $0.504            | $362.88             | ₹29,030.40         | 1,08,896                   | 1,08,896            |
-| EBS Storage          | -                   | -                   | -                 | $2,000              | ₹1,60,000          | -                          | -                   |
-| Load Balancers       | ALB                 | 2                   | $18.25 + LCU cost | $100                | ₹8,000             | -                          | -                   |
-
-**Total Estimated Monthly Cost:** ₹2,73,945.60
-
-#### Additional Services
-
-**Monitoring and Automation:**
-- **CloudWatch:** For monitoring and alerts
-- **Lambda:** For automation scripts
-- **SNS:** For notifications
-
-**Network Configuration:**
-- **VPC with Subnets:** For high availability
-
----
-
-This document provides a cost-optimized estimation of hardware requirements and AWS services needed to ensure business continuity for order square-off functionalities. It balances performance and cost by using appropriate instance types and provides a detailed cost estimation in INR, along with the user handling capacity for each component.
+### Conclusion:
+This back-of-the-envelope calculation provides an initial estimate of the hardware requirements needed to support the backup website for ICICI Securities' trading platform during failover scenarios. This plan includes redundancy and scalability considerations to ensure continuous operation without performance degradation. Further refinement of these estimates would involve detailed performance testing and profiling based on actual system behavior under load.
