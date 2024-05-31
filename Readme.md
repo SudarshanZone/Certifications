@@ -1,257 +1,115 @@
-### Summary Table: Backup Website Infrastructure and Data Usage
+### Backup Website for Order Square-Off: Detailed Estimations and AWS Requirements
 
-| **Component**        | **Instance Type** | **Quantity** | **Capacity per Instance** | **Total Capacity** | **Estimated Data Usage**        |
-|----------------------|-------------------|--------------|---------------------------|--------------------|----------------------------------|
-| **Frontend**         | T3.medium         | 2            | ~1,578,947 users          | ~3,157,894 users   | N/A (static assets)             |
-| **Web Servers**      | M5.large          | 2            | ~239,520 users            | ~479,040 users     | N/A                              |
-| **Application Servers** | C5.large       | 2            | ~3,594 users              | ~7,188 users       | 32 KB/user/hour                 |
-| **Database**         | R5.large          | 2            | ~11,976 users             | ~23,952 users      | Dependent on user transactions  |
-| **Messaging Queue**  | T3.medium         | 2            | ~11,976 users             | ~23,952 users      | 32 KB/user/hour (aggregated)    |
-| **Total Data Usage** | -                 | -            | -                         | -                  | 224 MB/hour for 7,188 users     |
+**Objective:** Ensure seamless order square-off functionalities in the event of a critical failure in the main website infrastructure.
 
-### Data Usage Breakdown per Operation
+#### 1. Updated Hardware Requirements
 
-| **Operation**            | **Request Size** | **Response Size** | **Total Size** | **Frequency (per hour)** | **Total Data per User (bytes)** |
-|--------------------------|------------------|-------------------|----------------|--------------------------|----------------------------------|
-| **Login**                | 279 bytes        | 317 bytes         | 596 bytes      | 1                        | 596                              |
-| **Sell Stock**           | 317 bytes        | 417 bytes         | 734 bytes      | 10                       | 7,340                            |
-| **View Transaction History** | 224 bytes    | 1,241 bytes       | 1,465 bytes    | 5                        | 7,325                            |
-| **Access Portfolio**     | 220 bytes        | 2,265 bytes       | 2,485 bytes    | 5                        | 12,425                           |
-| **Live Market Rate**     | -                | -                 | 50 bytes       | 100                      | 5,000                            |
-| **Total Data per User per Hour** | -         | -                 | -              | -                        | 32,686 ≈ 32 KB                  |
+**User Base:** 10,88,961 users.
+**Peak Simultaneous Users:** 10% of total users (approx. 1,08,896 users).
+**Request Size Calculation:**
+- **Average Request Size:** 450 bytes (based on detailed request and response headers analysis).
+- **Request Rate:** 5 requests per user per minute during peak load.
 
-### Cost Cutting and Optimization Summary
+#### Estimation of Server Requirements
 
-| **Component**              | **Optimization Strategy**                                              |
-|----------------------------|-------------------------------------------------------------------------|
-| **Frontend**               | Use AWS S3 and CloudFront for static assets, implement caching          |
-| **Web Servers**            | Use AWS Auto Scaling, optimize code and database queries                |
-| **Application Servers**    | Use AWS Auto Scaling, optimize code and database queries                |
-| **Database**               | Use read replicas, implement database caching (Redis/Memcached)        |
-| **Messaging Queue**        | Optimize RabbitMQ configuration, use clustering/high availability      |
-| **Monitoring and Alerts**  | Use AWS CloudWatch, implement automated failover mechanisms            |
+**Web Servers:**
+- **Request Rate:** 1,08,896 users * 5 requests/minute = 5,44,480 requests/minute.
+- **Requests per Second (RPS):** 5,44,480 / 60 = 9,075 RPS.
+- **Web Server Throughput:** Assuming each web server can handle 500 RPS, we would need approximately 19 web servers (9,075 / 500 ≈ 19).
 
-### AWS Infrastructure and Capacity
+**Application Servers:**
+- Similar throughput to web servers.
+- Number of servers needed: 19.
 
-| **Component**              | **Total Capacity**       | **Notes**                                        |
-|----------------------------|--------------------------|--------------------------------------------------|
-| **Frontend**               | ~3,157,894 users         | Handled by S3 and CloudFront for static assets   |
-| **Web Servers**            | ~479,040 users           | Nginx for web server load balancing              |
-| **Application Servers**    | ~7,188 users             | Go for API and services                          |
-| **Database**               | ~23,952 users            | PostgreSQL/MySQL with read replicas              |
-| **Messaging Queue**        | ~23,952 users            | RabbitMQ for message queuing                     |
-| **Total Data Usage**       | 224 MB/hour for 7,188 users | Based on 32 KB/user/hour                         |
+**Database Size:**
+- **User Data:** Assuming 1 KB per user, total user data = 10,88,961 * 1 KB = ~1 GB.
+- **Transaction Data:** Assuming 50 KB per transaction, with 5 transactions/user/day, total transaction data = 10,88,961 users * 50 KB * 5 transactions ≈ 2.5 TB/day.
+- **Backup Data Storage:** For a 7-day backup period, total storage required = 7 * 2.5 TB = 17.5 TB.
 
-This table summarizes the key components, instance types, capacities, data usage, and optimization strategies for the backup website infrastructure.
+**Database Servers:**
+- For high IOPS and throughput, considering a primary and replica setup:
+  - **Primary DB Server:** 1 high-performance instance.
+  - **Replica DB Server:** 1 for failover.
+  - **Backup Storage:** 20 TB storage.
 
-### Backup Website High-Level Design (HLD) for Order Square-Off
+#### AWS EC2 Instance Recommendations
 
----
+**Web Servers:**
+- **Instance Type:** m5.large (2 vCPU, 8 GB RAM)
+- **Number of Instances:** 19
 
-### Flow Diagram:
+**Application Servers:**
+- **Instance Type:** m5.large (2 vCPU, 8 GB RAM)
+- **Number of Instances:** 19
 
-1. **User**
-2. **Frontend**
-3. **Load Balancer (AWS ELB)**
-4. **Web Server (Nginx)**
-5. **Load Balancer (AWS ELB)**
-6. **Application Server (Go)**
-7. **Exchange Adaptor (TCP/IP)**
-8. **API Gateway (Go)**
-9. **Messaging Queue (RabbitMQ)**
-10. **Application Server (Go)**
-11. **Database Connected Application Server (Go)**
-12. **Existing System Database (PostgreSQL/MySQL)**
-13. **BOD Syncing with Database**
-14. **Monitoring System**
-15. **Control to Backup Application (IRRA Platform)**
+**Database Servers:**
+- **Primary DB Server:** r5.4xlarge (16 vCPU, 128 GB RAM, EBS-optimized)
+- **Replica DB Server:** r5.4xlarge (16 vCPU, 128 GB RAM, EBS-optimized)
+- **Backup Storage:** EBS volumes with 20 TB capacity.
 
----
+**Load Balancers:**
+- **Type:** Application Load Balancer (ALB)
+- **Number of Load Balancers:** 2 (one for web servers, one for application servers)
 
-### Technology Stack:
+**Monitoring and Automation:**
+- **CloudWatch:** For monitoring and alerts.
+- **Lambda:** For automation scripts to handle failover.
+- **SNS:** For notifications.
 
-- **Backend:**
-  - API: Go
-  - Services: Go
-  - Automation/report scripts: Python
-  - TAP application: C++
-- **Frontend:**
-  - ReactJS
-- **Databases:**
-  - PostgreSQL, MySQL
-- **OS:**
-  - Linux
-- **DevOps & CI/CD:**
-  - Docker, Jenkins
-- **Developer Tooling:**
-  - GitHub
-- **Queues and Monitoring:**
-  - RabbitMQ
-- **Webservers:**
-  - Nginx
+**Network Configuration:**
+- **VPC with Subnets:** Distributed across multiple availability zones for high availability.
 
----
+#### Cost Estimation
 
-### AWS Infrastructure Components:
+**EC2 Instances (Web and Application Servers):**
+- **m5.large:** 
+  - **Hourly Cost:** ~$0.096 (on-demand pricing)
+  - **Monthly Cost:** 19 instances * 0.096 * 24 * 30 ≈ $13,171.2
 
-1. **Frontend:**
-   - **Instance Type:** T3.medium
-   - **Quantity:** 2 instances
-   - **Capacity per Instance:** ~1,578,947 users (for static asset delivery)
-   - **Total Capacity:** ~3,157,894 users
+**Database Servers:**
+- **r5.4xlarge:** 
+  - **Hourly Cost:** ~$1.008 (on-demand pricing)
+  - **Monthly Cost (Primary + Replica):** 2 * 1.008 * 24 * 30 ≈ $1,451.52
 
-2. **Load Balancers:**
-   - **AWS ELB:** Distributes incoming application traffic across multiple targets (web servers, application servers).
+**EBS Storage:**
+- **20 TB:** 
+  - **Monthly Cost:** $0.10 per GB/month ≈ $2,000
 
-3. **Web Servers:**
-   - **Instance Type:** M5.large
-   - **Quantity:** 2 instances
-   - **Capacity per Instance:** ~239,520 users
-   - **Total Capacity:** ~479,040 users
+**Load Balancers:**
+- **ALB:** 
+  - **Monthly Cost:** ~$18.25 (per Load Balancer) + $0.008 per LCU-hour
+  - **Monthly Cost Estimation:** 2 ALBs * $18.25 + LCU-hours cost ≈ $100
 
-4. **Application Servers:**
-   - **Instance Type:** C5.large
-   - **Quantity:** 2 instances
-   - **Capacity per Instance:** ~3,594 users
-   - **Total Capacity:** ~7,188 users
+**Total Monthly Cost:**
+- **EC2 Instances:** $13,171.2
+- **Database Servers:** $1,451.52
+- **EBS Storage:** $2,000
+- **Load Balancers:** $100
+- **Total:** $16,722.72
 
-5. **Database:**
-   - **Instance Type:** R5.large (PostgreSQL/MySQL)
-   - **Quantity:** 2 instances
-   - **Capacity per Instance:** ~11,976 users
-   - **Total Capacity:** ~23,952 users
+#### Table Format Data
 
-6. **Messaging Queue (RabbitMQ):**
-   - **Instance Type:** T3.medium
-   - **Quantity:** 2 instances
-   - **Capacity per Instance:** ~11,976 users
-   - **Total Capacity:** ~23,952 users
+| Component            | Instance Type       | Number of Instances | Hourly Cost (per instance) | Monthly Cost (per instance) | Total Monthly Cost |
+|----------------------|---------------------|---------------------|----------------------------|-----------------------------|--------------------|
+| Web Servers          | m5.large            | 19                  | $0.096                     | $69.12                      | $13,171.20         |
+| Application Servers  | m5.large            | 19                  | $0.096                     | $69.12                      | $13,171.20         |
+| Primary DB Server    | r5.4xlarge          | 1                   | $1.008                     | $725.76                     | $725.76            |
+| Replica DB Server    | r5.4xlarge          | 1                   | $1.008                     | $725.76                     | $725.76            |
+| EBS Storage          | -                   | -                   | $0.10 per GB               | -                           | $2,000.00          |
+| Load Balancers       | ALB                 | 2                   | $18.25 + $0.008/LCU-hour   | -                           | $100.00            |
+
+**Total Estimated Monthly Cost: $29,893.92**
+
+#### Additional Services
+
+**Monitoring and Automation:**
+- **CloudWatch:** For monitoring and alerts.
+- **Lambda:** For automation scripts.
+- **SNS:** For notifications.
+
+**Network Configuration:**
+- **VPC with Subnets:** For high availability.
 
 ---
 
-### Data Usage Calculation:
-
-1. **Average Request and Response Sizes:**
-
-   - **Login:**
-     - Request: ~279 bytes
-     - Response: ~317 bytes
-     - Total: ~596 bytes
-
-   - **Selling Stock:**
-     - Request: ~317 bytes
-     - Response: ~417 bytes
-     - Total: ~734 bytes
-
-   - **Viewing Transaction History:**
-     - Request: ~224 bytes
-     - Response: ~1,241 bytes
-     - Total: ~1,465 bytes
-
-   - **Accessing Portfolio:**
-     - Request: ~220 bytes
-     - Response: ~2,265 bytes
-     - Total: ~2,485 bytes
-
-   - **Live Market Rate (WebSocket):**
-     - Message: ~50 bytes per message
-
-2. **Data Usage per User per Hour:**
-
-   - **Login:**
-     - 1 time/hour
-     - Data: 596 bytes
-
-   - **Sell Stock:**
-     - 10 times/hour
-     - Data: 7,340 bytes
-
-   - **View Transaction History:**
-     - 5 times/hour
-     - Data: 7,325 bytes
-
-   - **Access Portfolio:**
-     - 5 times/hour
-     - Data: 12,425 bytes
-
-   - **Live Market Rate Updates:**
-     - 100 messages/hour
-     - Data: 5,000 bytes
-
-   - **Total Data per User per Hour:**
-     - 596 + 7,340 + 7,325 + 12,425 + 5,000 = 32,686 bytes ≈ 32 KB
-
-3. **Total Data Usage for All Users:**
-
-   - **Assuming 7,188 users (limited by the Application Server capacity):**
-     - Total Data per Hour: 32 KB/user * 7,188 users = 229,376 KB ≈ 224 MB
-
----
-
-### AWS EC2 Instance Requirements:
-
-#### 1. **Frontend (T3.medium):**
-
-- **Instance Type:** T3.medium
-- **Quantity:** 2 instances
-- **Capacity per Instance:** ~1,578,947 users
-- **Total Capacity:** ~3,157,894 users
-
-#### 2. **Web Servers (M5.large):**
-
-- **Instance Type:** M5.large
-- **Quantity:** 2 instances
-- **Capacity per Instance:** ~239,520 users
-- **Total Capacity:** ~479,040 users
-
-#### 3. **Application Servers (C5.large):**
-
-- **Instance Type:** C5.large
-- **Quantity:** 2 instances
-- **Capacity per Instance:** ~3,594 users
-- **Total Capacity:** ~7,188 users
-
-#### 4. **Database (PostgreSQL/MySQL) (R5.large):**
-
-- **Instance Type:** R5.large
-- **Quantity:** 2 instances
-- **Capacity per Instance:** ~11,976 users
-- **Total Capacity:** ~23,952 users
-
-#### 5. **Messaging Queue (RabbitMQ) (T3.medium):**
-
-- **Instance Type:** T3.medium
-- **Quantity:** 2 instances
-- **Capacity per Instance:** ~11,976 users
-- **Total Capacity:** ~23,952 users
-
----
-
-### Cost Cutting and Optimization:
-
-1. **Frontend:**
-   - Use AWS S3 and CloudFront for serving static assets to reduce the load on EC2 instances.
-   - Implement caching strategies.
-
-2. **Web Servers and Application Servers:**
-   - Use AWS Auto Scaling to dynamically adjust the number of instances based on traffic.
-   - Optimize application code and database queries to reduce CPU and memory usage.
-
-3. **Database:**
-   - Use read replicas to offload read queries from the primary database.
-   - Implement database caching using Redis or Memcached.
-
-4. **Messaging Queue:**
-   - Optimize RabbitMQ configuration to handle peak loads efficiently.
-   - Use clustering and high availability configurations.
-
-5. **Monitoring and Alerts:**
-   - Use AWS CloudWatch for monitoring and setting up alerts.
-   - Implement automated failover mechanisms.
-
----
-
-### Summary:
-
-By utilizing the given technology stack and AWS infrastructure, the backup website can effectively handle the required user load while ensuring cost efficiency. The optimized instance types and configurations allow for seamless scaling and robust performance, ensuring continuous operations during failover scenarios. The calculated data usage provides a clear understanding of the system's capacity to handle user requests efficiently.
-
+This document provides a detailed estimation of hardware requirements and AWS services needed to ensure business continuity for order square-off functionalities. It considers the peak user load, necessary instance types, storage, and monitoring solutions to deliver a robust and scalable backup website.
