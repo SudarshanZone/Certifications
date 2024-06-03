@@ -1,3 +1,19 @@
+sudarshan
+https://www.hackerearth.com/challenges/test/programming-test-cdac-2/?login=583e9a451e6a6c063c04a9fab9536d01
+
+
+
+shreyas :-
+
+https://www.hackerearth.com/challenges/test/programming-test-cdac-2/?login=3c585946fee0cd503567cf47d7419ef4
+
+
+
+
+
+
+
+
 ### Estimating Infrastructure Requirements Based on Data Sizes and Load
 
 Given the constraints and requirements, we need to calculate the network, computational, and storage capacities required to handle the requests and responses. This will help us optimize the infrastructure and ensure cost efficiency while meeting the performance requirements.
