@@ -192,3 +192,134 @@ ______&_________&&&&&&&&&&&&&&&&&&&
 
 
 
+#include <iostream>
+#include <vector>
+#include <string>
+#include <stack>
+
+using namespace std;
+
+string solution(int N, vector<string> S) {
+    stack<string> back_stack;
+    stack<string> forward_stack;
+    string current_page = "/home";
+
+    for (const string& operation : S) {
+        if (operation == "back") {
+            if (!back_stack.empty()) {
+                forward_stack.push(current_page);
+                current_page = back_stack.top();
+                back_stack.pop();
+            }
+        } else if (operation == "forward") {
+            if (!forward_stack.empty()) {
+                back_stack.push(current_page);
+                current_page = forward_stack.top();
+                forward_stack.pop();
+            }
+        } else {
+            back_stack.push(current_page);
+            current_page = operation;
+            while (!forward_stack.empty()) {
+                forward_stack.pop();
+            }
+        }
+    }
+
+    // Build the result string
+    vector<string> result;
+    stack<string> temp;
+    while (!back_stack.empty()) {
+        temp.push(back_stack.top());
+        back_stack.pop();
+    }
+    while (!temp.empty()) {
+        result.push_back(temp.top());
+        temp.pop();
+    }
+    result.push_back(current_page);
+    while (!forward_stack.empty()) {
+        result.push_back(forward_stack.top());
+        forward_stack.pop();
+    }
+
+    string history = "";
+    for (const string& page : result) {
+        history += page + " ";
+    }
+    return history.substr(0, history.size() - 1);  // remove the trailing space
+}
+
+int main() {
+    int N;
+    cin >> N;
+    vector<string> S(N);
+    for (int i = 0; i < N; ++i) {
+        cin >> S[i];
+    }
+
+    cout << solution(N, S) << endl;
+    return 0;
+}
+
+
+
+
+
+package main
+
+import (
+    "bufio"
+    "fmt"
+    "os"
+    "strings"
+)
+
+func solution(N int, S []string) string {
+    backStack := []string{}
+    forwardStack := []string{}
+    currentPage := "/home"
+
+    for _, operation := range S {
+        if operation == "back" {
+            if len(backStack) > 0 {
+                forwardStack = append(forwardStack, currentPage)
+                currentPage = backStack[len(backStack)-1]
+                backStack = backStack[:len(backStack)-1]
+            }
+        } else if operation == "forward" {
+            if len(forwardStack) > 0 {
+                backStack = append(backStack, currentPage)
+                currentPage = forwardStack[len(forwardStack)-1]
+                forwardStack = forwardStack[:len(forwardStack)-1]
+            }
+        } else {
+            backStack = append(backStack, currentPage)
+            currentPage = operation
+            forwardStack = []string{}
+        }
+    }
+
+    // Build the result string
+    result := strings.Join(backStack, " ") + " " + currentPage
+    if len(forwardStack) > 0 {
+        result += " " + strings.Join(forwardStack, " ")
+    }
+    return result
+}
+
+func main() {
+    scanner := bufio.NewScanner(os.Stdin)
+    scanner.Scan()
+    var N int
+    fmt.Sscanf(scanner.Text(), "%d", &N)
+
+    S := make([]string, N)
+    for i := 0; i < N; i++ {
+        scanner.Scan()
+        S[i] = scanner.Text()
+    }
+
+    fmt.Println(solution(N, S))
+}
+
