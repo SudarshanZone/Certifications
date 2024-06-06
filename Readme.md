@@ -78,6 +78,117 @@ func main() {
 
 _________________________________
 
+#include <iostream>
+#include <string>
+#include <unordered_map>
+#include <algorithm>
+#include <vector>
+
+using namespace std;
+
+int calculateMaxBeauty(const string& str, int rounds) {
+    int max_count = 0;
+    unordered_map<char, int> char_count;
+
+    for (char c : str) {
+        char_count[c]++;
+        max_count = max(max_count, char_count[c]);
+    }
+
+    int max_possible = min(static_cast<int>(str.size()), max_count + rounds);
+    return max_possible;
+}
+
+string solve(int N, int M, string P, string Q, string R) {
+    int beautyP = calculateMaxBeauty(P, N);
+    int beautyQ = calculateMaxBeauty(Q, N);
+    int beautyR = calculateMaxBeauty(R, N);
+
+    vector<pair<int, string>> results = {{beautyP, "Bob"}, {beautyQ, "Ben"}, {beautyR, "Mike"}};
+    sort(results.begin(), results.end(), greater<>());
+
+    if (results[0].first == results[1].first) {
+        return "Draw";
+    } else {
+        return results[0].second;
+    }
+}
+
+int main() {
+    int N, M;
+    cin >> N >> M;
+    string P, Q, R;
+    cin >> P >> Q >> R;
+
+    cout << solve(N, M, P, Q, R) << endl;
+    return 0;
+}
+
+
+
+package main
+
+import (
+    "fmt"
+    "sort"
+)
+
+func calculateMaxBeauty(str string, rounds int) int {
+    charCount := make(map[rune]int)
+    maxCount := 0
+
+    for _, char := range str {
+        charCount[char]++
+        if charCount[char] > maxCount {
+            maxCount = charCount[char]
+        }
+    }
+
+    maxPossible := min(len(str), maxCount+rounds)
+    return maxPossible
+}
+
+func min(a, b int) int {
+    if a < b {
+        return a
+    }
+    return b
+}
+
+func solve(N int, M int, P string, Q string, R string) string {
+    beautyP := calculateMaxBeauty(P, N)
+    beautyQ := calculateMaxBeauty(Q, N)
+    beautyR := calculateMaxBeauty(R, N)
+
+    results := []struct {
+        beauty int
+        name   string
+    }{
+        {beautyP, "Bob"},
+        {beautyQ, "Ben"},
+        {beautyR, "Mike"},
+    }
+
+    sort.Slice(results, func(i, j int) bool {
+        return results[i].beauty > results[j].beauty
+    })
+
+    if results[0].beauty == results[1].beauty {
+        return "Draw"
+    }
+    return results[0].name
+}
+
+func main() {
+    var N, M int
+    fmt.Scan(&N, &M)
+    var P, Q, R string
+    fmt.Scan(&P, &Q, &R)
+
+    fmt.Println(solve(N, M, P, Q, R))
+}
+
+______&_________&&&&&&&&&&&&&&&&&&&
 
 
 
