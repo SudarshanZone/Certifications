@@ -36,4 +36,48 @@ int main() {
 }
 
 
+package main
+
+import (
+    "fmt"
+)
+
+func decrementChar(c byte, times int) byte {
+    return 'a' + (c - 'a' - byte(times) + 26) % 26
+}
+
+func decryptMessage(S string, Key []int, N int, M int) string {
+    original := []byte(S)
+    for i := N - M; i >= 0; i-- {
+        for j := 0; j < M; j++ {
+            original[i+j] = decrementChar(original[i+j], Key[j])
+        }
+    }
+    return string(original)
+}
+
+func main() {
+    var T int
+    fmt.Scan(&T)
+    for T > 0 {
+        T--
+        var N, M int
+        fmt.Scan(&N)
+        var S string
+        fmt.Scan(&S)
+        fmt.Scan(&M)
+        Key := make([]int, M)
+        for i := 0; i < M; i++ {
+            fmt.Scan(&Key[i])
+        }
+        original := decryptMessage(S, Key, N, M)
+        fmt.Println(original)
+    }
+}
+
+
+_________________________________
+
+
+
 
