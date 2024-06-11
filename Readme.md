@@ -1,3 +1,51 @@
+### Summary of the Project Plan for Developing and Deploying the IRRA Backup Website Application Server
+
+#### Project Duration:
+- **Total Duration:** 3 months
+- **Development Phase:** 2 months
+- **Deployment Phase:** 1 month
+
+#### Major Milestones:
+
+1. **Project Setup & Planning (Week 1)**
+   - Define requirements and set up the development environment.
+
+2. **Core Functionality Development (Weeks 2-5)**
+   - Implement login and authentication.
+   - Develop order management, view positions, and financial information features.
+
+3. **Data Synchronization & Integration (Weeks 4-6)**
+   - Set up RabbitMQ and implement data synchronization with the exchange API.
+
+4. **Authentication & Security (Weeks 4-6)**
+   - Secure data transmission with HTTPS.
+   - Implement JWT or OAuth2 for authentication.
+
+5. **Error Handling & Monitoring (Weeks 6-7)**
+   - Integrate Grafana for monitoring.
+   - Develop robust error handling routines.
+
+6. **Testing & QA (Weeks 8-9)**
+   - Conduct unit, integration, performance, and security testing.
+
+7. **Deployment Preparation (Weeks 9-10)**
+   - Dockerize the application and set up the Jenkins CI/CD pipeline.
+   - Finalize deployment scripts.
+
+8. **Deployment (Weeks 11-12)**
+   - Deploy to a staging environment for final testing.
+   - Deploy to production and monitor for any issues.
+
+#### Key Tasks Overview:
+- **Weeks 1-5:** Focus on setting up the project and developing core functionalities.
+- **Weeks 4-7:** Implement data synchronization, authentication, and security features.
+- **Weeks 6-9:** Emphasize error handling, monitoring, and thorough testing.
+- **Weeks 9-12:** Prepare for deployment, conduct final tests, and deploy to production.
+
+This structured approach ensures that the development of the application server is completed within two months, followed by a month dedicated to deployment, ensuring a smooth transition and operational continuity.
+
+
+
 Here's the revised Gantt chart with weeks as columns and task names as rows.
 
 ### Gantt Chart for the Entire Project
